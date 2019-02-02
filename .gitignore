@@ -9,6 +9,7 @@ cache/
 *.cookie
 keys/
 *.log
+*.mp4
 /log/
 /.pytest_cache/
 obstacle-tower-env/
