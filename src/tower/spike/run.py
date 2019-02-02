@@ -20,9 +20,16 @@ def main():
     cv2.namedWindow("original")
     cv2.moveWindow("original", 0, 0)
     cv2.resizeWindow("original", 240, 200)
+
     cv2.namedWindow("mean")
     cv2.moveWindow("mean", 400, 0)
     cv2.resizeWindow("mean", 50, 50)
+
+    cv2.namedWindow("diff")
+    cv2.moveWindow("diff", 800, 0)
+    cv2.resizeWindow("diff", 50, 50)
+
+    last_av_image = None
 
     while not done:
         frame = env.render()
@@ -30,8 +37,13 @@ def main():
         av_image = average_image(frame)
         cv2.imshow("original", frame)
         cv2.imshow("mean", av_image)
-        cv2.waitKey(1)
-        obs, reward, done, info = env.step(env.action_space.sample())
+        if last_av_image is not None:
+            diff_av_image = np.mean(np.abs(av_image - last_av_image), axis=2)
+            cv2.imshow("diff", diff_av_image)
+        cv2.waitKey(0)
+        last_av_image = av_image
+        # obs, reward, done, info = env.step(env.action_space.sample())
+        obs, reward, done, info = env.step([1, 0, 0, 0])
         print(f"reward={reward}")
 
 
