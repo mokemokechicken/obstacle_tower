@@ -1,0 +1,15 @@
+.idea
+*.pyc
+__pycache__
+.DS_Store
+/tmp/
+.env
+*.bin
+cache/
+*.cookie
+keys/
+*.log
+/log/
+/.pytest_cache/
+obstacle-tower-env/
+obstacletower.app/

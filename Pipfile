@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+jupyter = "*"
+tensorflow = "*"
+gym = "*"
+pillow = "*"
+ml-agents = {git = "https://github.com/Unity-Technologies/ml-agents.git",subdirectory = "ml-agents"}
+obstacle-tower-env = {editable = true,path = "./obstacle-tower-env"}
+
+[requires]
+python_version = "3.6"
