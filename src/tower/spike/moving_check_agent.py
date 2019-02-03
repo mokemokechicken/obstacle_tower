@@ -35,7 +35,7 @@ class MovingCheckAgent:
 
     def reset(self):
         self.state = CheckState()
-        self.results = []
+        self.results = self.results[-1000:]
 
     def step(self):
         if self.done:
@@ -73,6 +73,7 @@ class MovingCheckAgent:
         frame_shape[-1] *= 2
         input_f01 = Input(shape=frame_shape)
         x = Conv2D(32, kernel_size=8, strides=4, padding="valid", activation='relu')(input_f01)
+        x = Conv2D(32, kernel_size=3, strides=1, padding="valid", activation='relu')(x)
         x = Flatten()(x)
         forward_back = Dense(3, activation='softmax', name="move_forward_back")(x)
         move_left_right = Dense(3, activation='softmax', name="move_left_right")(x)
@@ -92,7 +93,6 @@ class MovingCheckAgent:
         for i, names in enumerate(names_list):
             if action[i] > 0:
                 prob = pred[i][0][action[i]]
-                print(pred[i][0])
                 name = names[action[i]]
                 messages.append(f"{name}={prob*100:.1f}%")
         if messages:
@@ -101,8 +101,10 @@ class MovingCheckAgent:
     def update_model(self):
         train_data_x = self.prepare_x()
         train_data_y = self.prepare_y()
+        if len(train_data_x) < 500:
+            return
 
-        accuracy = self.check_accuracy(train_data_x, train_data_y)
+        accuracy = self.check_accuracy(train_data_x[-30:], train_data_y[-30:])
         while accuracy < 0.9:
             self.model.fit(train_data_x, train_data_y, epochs=5)
             accuracy = self.check_accuracy(train_data_x, train_data_y)
@@ -135,13 +137,13 @@ class MovingCheckAgent:
             for di in range(len(pred)):
                 if true_y[di, 0] == 0:
                     idx = np.argmax(pred[di])
+                    # logger.info(f"true={true_y[di]}: pred_idx={idx} pred={pred[di]} ")
                     counter["total"] += 1
                     if true_y[di, idx] == 1:
                         counter["ok"] += 1
         accuracy = counter['ok'] / counter['total']
-        print(f"accuracy: {100 * accuracy:.1f}% ({counter['ok']}/{counter['total']})")
+        logger.info(f"accuracy: {100 * accuracy:.1f}% ({counter['ok']}/{counter['total']})")
         return accuracy
-
 
 
 class CheckState:
