@@ -27,7 +27,6 @@ def main():
 
     screen = Screen()
     mc_agent = MovingCheckAgent(env)
-    jc_agent = ActionCycleCheck(env, Action.JUMP)
 
     for _ in range(20):
         env.step(Action.FORWARD)
@@ -37,24 +36,11 @@ def main():
         frames.append(frame)
         screen.show("original", frame)
 
-        # small_image = average_image(frame)
-        # screen.show("mean", small_image)
-        # if last_av_image is not None:
-        #     diff_av_image = np.mean(np.abs(avg_image - last_av_image), axis=2)
-        #     screen.show("diff", diff_av_image)
-        # last_av_image = avg_image
-        cv2.waitKey(1)
-        # obs, reward, done, info = env.step(env.action_space.sample())
+        cv2.waitKey(50)
 
-        # obs, reward, done, info = env.step(cc.action)
-        # cc.prev_small_image(small_image)
+        action = mc_agent.step()
+        mc_agent.confirm_action(action)
 
-        # jc_agent.step()
-        # if jc_agent.done:
-        #     print(jc_agent.estimated_cycle)
-        #     break
-
-        mc_agent.step()
         if mc_agent.done:
             mc_agent.update_model()
             mc_agent.reset()

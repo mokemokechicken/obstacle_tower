@@ -1,4 +1,6 @@
 from collections import namedtuple, Counter
+from logging import getLogger
+
 import numpy as np
 from obstacle_tower_env import ObstacleTowerEnv
 from tensorflow.python.keras import Input, Model
@@ -11,14 +13,17 @@ from tower.spike.util import average_image, frame_abs_diff, to_onehot
 
 CheckResult = namedtuple('CheckResult', 'frame0 frame1 action')
 
+logger = getLogger(__name__)
+
 
 class MovingCheckAgent:
     def __init__(self, env: ObstacleTowerEnv):
         self.env = env
-        self.n_step = 20
+        self.n_step = 5
         self.check_actions = [Action.NOP, Action.FORWARD, Action.BACK,
-                              Action.CAMERA_RIGHT, Action.LEFT,
-                              Action.RIGHT, Action.LEFT]
+                              Action.CAMERA_RIGHT, Action.CAMERA_LEFT,
+                              Action.RIGHT, Action.LEFT,
+                              Action.FORWARD, Action.CAMERA_RIGHT]
         self.state = CheckState()
         self.results = []
         self._last_small_frame = None
@@ -36,7 +41,7 @@ class MovingCheckAgent:
         if self.done:
             return
 
-        action = self.check_actions[self.state.action_index]
+        recording_action = action = self.check_actions[self.state.action_index]
         self.state.current_step += 1
         if self.state.current_step == self.n_step:
             self.state.current_step = 0
@@ -51,9 +56,11 @@ class MovingCheckAgent:
         frame1 = self.env.render()
         small_frame = average_image(frame1)
         if frame_abs_diff(self._last_small_frame, small_frame) < 3:
-            action = Action.NOP
+            logger.info("convert to NOP")
+            recording_action = Action.NOP
         self._last_small_frame = small_frame
-        self.results.append(CheckResult(frame0, frame1, action))
+        self.results.append(CheckResult(frame0, frame1, recording_action))
+        return action
 
     @property
     def model(self) -> Model:
@@ -75,35 +82,62 @@ class MovingCheckAgent:
         model.compile(Adam(lr=0.001), loss=categorical_crossentropy)
         return model
 
-    def update_model(self):
-        data_x = []
-        data_y = []
-        for result in self.results:
-            data_x.append(np.concatenate([result.frame0, result.frame1], axis=2))
-            action = result.action
-            mfb_true = to_onehot(action[0], 3)
-            rlr_true = to_onehot(action[1], 3)
-            ud_true = to_onehot(action[2], 3)
-            mlr_true = to_onehot(action[3], 3)
-            data_y.append([mfb_true, rlr_true, ud_true, mlr_true])
+    def confirm_action(self, action):
+        px = self.prepare_x(n=1)
+        pred = self.model.predict(px)
 
-        train_data_x = np.vstack([np.expand_dims(x, axis=0) for x in data_x])
-        train_data_y = [np.array([x[i] for x in data_y]) for i in range(4)]
+        names_list = [['', 'forward', 'back'], ['', 'camera_left', 'camera_right'],
+                      ['', 'up', 'down'], ['', 'right', 'left']]
+        messages = []
+        for i, names in enumerate(names_list):
+            if action[i] > 0:
+                prob = pred[i][0][action[i]]
+                print(pred[i][0])
+                name = names[action[i]]
+                messages.append(f"{name}={prob*100:.1f}%")
+        if messages:
+            logger.info(", ".join(messages))
+
+    def update_model(self):
+        train_data_x = self.prepare_x()
+        train_data_y = self.prepare_y()
 
         accuracy = self.check_accuracy(train_data_x, train_data_y)
         while accuracy < 0.9:
             self.model.fit(train_data_x, train_data_y, epochs=5)
             accuracy = self.check_accuracy(train_data_x, train_data_y)
 
+    def prepare_x(self, n=None):
+        data_x = []
+        n = n or len(self.results)
+        for result in self.results[:n]:
+            data_x.append(np.concatenate([result.frame0, result.frame1], axis=2))
+        train_data_x = np.vstack([np.expand_dims(x, axis=0) for x in data_x])
+        return train_data_x
+
+    def prepare_y(self, n=None):
+        data_y = []
+        n = n or len(self.results)
+        for result in self.results[:n]:
+            action = result.action
+            mfb_true = to_onehot(action[0], 3)
+            rlr_true = to_onehot(action[1], 3)
+            ud_true = to_onehot(action[2], 3)
+            mlr_true = to_onehot(action[3], 3)
+            data_y.append([mfb_true, rlr_true, ud_true, mlr_true])
+        train_data_y = [np.array([x[i] for x in data_y]) for i in range(4)]
+        return train_data_y
+
     def check_accuracy(self, x, y):
         preds = self.model.predict(x)
         counter = Counter()
         for pred, true_y in zip(preds, y):  # forward/back, camera, up_down, left/right
             for di in range(len(pred)):
-                idx = np.argmax(pred[di])
-                counter["total"] += 1
-                if true_y[di, idx] == 1:
-                    counter["ok"] += 1
+                if true_y[di, 0] == 0:
+                    idx = np.argmax(pred[di])
+                    counter["total"] += 1
+                    if true_y[di, idx] == 1:
+                        counter["ok"] += 1
         accuracy = counter['ok'] / counter['total']
         print(f"accuracy: {100 * accuracy:.1f}% ({counter['ok']}/{counter['total']})")
         return accuracy
