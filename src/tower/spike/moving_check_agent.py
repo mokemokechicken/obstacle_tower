@@ -73,36 +73,30 @@ class MovingCheckAgent:
         frame_shape[-1] *= 2
         input_f01 = Input(shape=frame_shape)
         x = Conv2D(32, kernel_size=8, strides=4, padding="valid", activation='relu')(input_f01)
-        x = Conv2D(32, kernel_size=3, strides=1, padding="valid", activation='relu')(x)
+        # x = Conv2D(32, kernel_size=3, strides=1, padding="valid", activation='relu')(x)
         x = Flatten()(x)
-        forward_back = Dense(3, activation='softmax', name="move_forward_back")(x)
-        move_left_right = Dense(3, activation='softmax', name="move_left_right")(x)
-        camera_left_right = Dense(3, activation='softmax', name="camera_left_right")(x)
-        up_down = Dense(3, activation='softmax', name="up_down")(x)
-        model = Model(input_f01, [forward_back, camera_left_right, up_down, move_left_right])
+        # forward_back = Dense(4, activation='softmax', name="move_forward_back")(x)
+        # move_left_right = Dense(3, activation='softmax', name="move_left_right")(x)
+        # camera_left_right = Dense(3, activation='softmax', name="camera_left_right")(x)
+        # up_down = Dense(3, activation='softmax', name="up_down")(x)
+        # model = Model(input_f01, [forward_back, camera_left_right, up_down, move_left_right])
+        actions = Dense(54, activation='softmax', name="actions")(x)
+        model = Model(input_f01, actions)
         model.compile(Adam(lr=0.001), loss=categorical_crossentropy)
         return model
 
     def confirm_action(self, action):
         px = self.prepare_x(n=1)
-        pred = self.model.predict(px)
+        pred = self.model.predict(px)[0]
 
-        names_list = [['', 'forward', 'back'], ['', 'camera_left', 'camera_right'],
-                      ['', 'up', 'down'], ['', 'right', 'left']]
-        messages = []
-        for i, names in enumerate(names_list):
-            if action[i] > 0:
-                prob = pred[i][0][action[i]]
-                name = names[action[i]]
-                messages.append(f"{name}={prob*100:.1f}%")
-        if messages:
-            logger.info(", ".join(messages))
+        p_idx = int(np.argmax(pred))
+        a_idx = Action.to_int(action)
+        if p_idx == a_idx:
+            logger.info(f"maybe success action={action}")
 
     def update_model(self):
         train_data_x = self.prepare_x()
         train_data_y = self.prepare_y()
-        if len(train_data_x) < 500:
-            return
 
         accuracy = self.check_accuracy(train_data_x[-30:], train_data_y[-30:])
         while accuracy < 0.9:
@@ -122,25 +116,20 @@ class MovingCheckAgent:
         n = n or len(self.results)
         for result in self.results[:n]:
             action = result.action
-            mfb_true = to_onehot(action[0], 3)
-            rlr_true = to_onehot(action[1], 3)
-            ud_true = to_onehot(action[2], 3)
-            mlr_true = to_onehot(action[3], 3)
-            data_y.append([mfb_true, rlr_true, ud_true, mlr_true])
-        train_data_y = [np.array([x[i] for x in data_y]) for i in range(4)]
+            data_y.append(to_onehot(Action.to_int(action), 54))
+        train_data_y = np.array(data_y)
         return train_data_y
 
     def check_accuracy(self, x, y):
         preds = self.model.predict(x)
         counter = Counter()
-        for pred, true_y in zip(preds, y):  # forward/back, camera, up_down, left/right
-            for di in range(len(pred)):
-                if true_y[di, 0] == 0:
-                    idx = np.argmax(pred[di])
-                    # logger.info(f"true={true_y[di]}: pred_idx={idx} pred={pred[di]} ")
-                    counter["total"] += 1
-                    if true_y[di, idx] == 1:
-                        counter["ok"] += 1
+        for di in range(len(preds)):
+            counter['total'] += 1
+            p_idx = int(np.argmax(preds[di]))
+            t_idx =  int(np.argmax(y[di]))
+            if p_idx == t_idx:
+                counter['ok'] += 1
+
         accuracy = counter['ok'] / counter['total']
         logger.info(f"accuracy: {100 * accuracy:.1f}% ({counter['ok']}/{counter['total']})")
         return accuracy

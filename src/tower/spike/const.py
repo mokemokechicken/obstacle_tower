@@ -11,3 +11,6 @@ class Action:
     RIGHT = np.array([0, 0, 0, 1])
     LEFT = np.array([0, 0, 0, 2])
 
+    @staticmethod
+    def to_int(action):
+        return action[0]*(3*2*3) + action[1]*(2*3) + action[2]*3 + action[3]
