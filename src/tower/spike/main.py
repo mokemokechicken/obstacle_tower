@@ -1,3 +1,4 @@
+import random
 from collections import Counter
 from logging import basicConfig, INFO
 from pathlib import Path
@@ -11,8 +12,10 @@ from obstacle_tower_env import ObstacleTowerEnv
 
 from tower.spike.action_cycle_check import ActionCycleCheck
 from tower.spike.const import Action
+from tower.spike.judge_nop import JudgeMove
 from tower.spike.jump_cycle_check import JumpCycleCheck
 from tower.spike.moving_check_agent import MovingCheckAgent, CheckResult
+from tower.spike.util import average_image
 
 PRJ_ROOT = Path(__file__).parents[3]
 
@@ -21,32 +24,64 @@ def main():
     basicConfig(level=INFO)
     env = ObstacleTowerEnv(str(PRJ_ROOT / 'obstacletower'), retro=False, worker_id=9)
     done = False
-    frames = []
     env.floor(1)
     env.reset()
 
     screen = Screen()
-    mc_agent = MovingCheckAgent(env)
+    random_action = RandomRepeatAction(Action.NOP, 10)
+    judger = JudgeMove()
 
-    for _ in range(20):
+    for _ in range(10):
         env.step(Action.FORWARD)
+
+    last_small_frame = None
 
     while not done:
         frame = env.render()
-        frames.append(frame)
+
+        if last_small_frame is None:
+            last_small_frame = average_image(frame)
+
+        action = random_action.decide_action()
+        if action is None:
+            random_action.reset()
+            action = random_action.decide_action()
+
+        env.step(action)
+        current_small_frame = average_image(env.render())
+        didnt_move = judger.did_move(last_small_frame, current_small_frame, action)
+        last_small_frame = current_small_frame
+
         screen.show("original", frame)
-
-        cv2.waitKey(50)
-
-        action = mc_agent.step()
-        mc_agent.confirm_action(action)
-
-        if mc_agent.done:
-            mc_agent.update_model()
-            mc_agent.reset()
+        cv2.waitKey(0)
 
 
 ROTATION_CYCLE = 20
+
+
+class RandomRepeatAction:
+    action = None
+    n = None
+
+    def __init__(self, action=None, n=None):
+        self.reset(action, n)
+
+    def reset(self, action=None, n=None):
+        if action is None:
+            actions = [Action.NOP, Action.FORWARD, Action.BACK,
+                       Action.CAMERA_RIGHT, Action.CAMERA_LEFT,
+                       Action.JUMP,
+                       Action.LEFT, Action.RIGHT,
+                       ]
+            action = actions[np.random.choice(range(len(actions)))]
+        self.action = action
+        self.n = n or int(np.random.randint(4, 10))
+
+    def decide_action(self):
+        if self.n == 0:
+            return None
+        self.n -= 1
+        return self.action
 
 
 class Screen:

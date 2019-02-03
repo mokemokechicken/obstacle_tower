@@ -1,3 +1,4 @@
+import random
 from collections import namedtuple, Counter
 from logging import getLogger
 
@@ -34,6 +35,7 @@ class MovingCheckAgent:
         return self.state.done
 
     def reset(self):
+        self.n_step = int(random.random()*4) + 4
         self.state = CheckState()
         self.results = self.results[-1000:]
 
@@ -73,13 +75,14 @@ class MovingCheckAgent:
         frame_shape[-1] *= 2
         input_f01 = Input(shape=frame_shape)
         x = Conv2D(32, kernel_size=8, strides=4, padding="valid", activation='relu')(input_f01)
-        # x = Conv2D(32, kernel_size=3, strides=1, padding="valid", activation='relu')(x)
+        x = Conv2D(32, kernel_size=3, strides=1, padding="valid", activation='relu')(x)
         x = Flatten()(x)
         # forward_back = Dense(4, activation='softmax', name="move_forward_back")(x)
         # move_left_right = Dense(3, activation='softmax', name="move_left_right")(x)
         # camera_left_right = Dense(3, activation='softmax', name="camera_left_right")(x)
         # up_down = Dense(3, activation='softmax', name="up_down")(x)
         # model = Model(input_f01, [forward_back, camera_left_right, up_down, move_left_right])
+        x = Dense(24, activation='relu')(x)
         actions = Dense(54, activation='softmax', name="actions")(x)
         model = Model(input_f01, actions)
         model.compile(Adam(lr=0.001), loss=categorical_crossentropy)
@@ -100,7 +103,7 @@ class MovingCheckAgent:
 
         accuracy = self.check_accuracy(train_data_x[-30:], train_data_y[-30:])
         while accuracy < 0.9:
-            self.model.fit(train_data_x, train_data_y, epochs=5)
+            self.model.fit(train_data_x, train_data_y, epochs=3)
             accuracy = self.check_accuracy(train_data_x, train_data_y)
 
     def prepare_x(self, n=None):
