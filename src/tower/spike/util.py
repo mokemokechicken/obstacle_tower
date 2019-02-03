@@ -25,3 +25,9 @@ def stride_conv2d(img: np.ndarray, kernel: np.ndarray, stride: int = 1):
     out_shape = (k1, k2, 1 + (i1 - k1) // stride, 1 + (i2 - k2) // stride)
     stride_array = np.lib.stride_tricks.as_strided(img, shape=out_shape, strides=(s1, s2, s1 * stride, s2 * stride))
     return np.einsum('ij,ijkl->kl', kernel, stride_array)
+
+
+def to_onehot(idx, size):
+    ret = [0] * size
+    ret[idx] = 1
+    return ret

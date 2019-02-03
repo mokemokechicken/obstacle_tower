@@ -8,10 +8,6 @@ import numpy as np
 from matplotlib import animation
 from matplotlib import pyplot as plt
 from obstacle_tower_env import ObstacleTowerEnv
-from tensorflow.python.keras import Input, Model
-from tensorflow.python.keras.layers import Conv2D, Dense, Flatten
-from tensorflow.python.keras.losses import categorical_crossentropy
-from tensorflow.python.keras.optimizers import Adam
 
 from tower.spike.action_cycle_check import ActionCycleCheck
 from tower.spike.const import Action
@@ -47,67 +43,21 @@ def main():
         #     diff_av_image = np.mean(np.abs(avg_image - last_av_image), axis=2)
         #     screen.show("diff", diff_av_image)
         # last_av_image = avg_image
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         # obs, reward, done, info = env.step(env.action_space.sample())
 
         # obs, reward, done, info = env.step(cc.action)
         # cc.prev_small_image(small_image)
 
-        jc_agent.step()
-        if jc_agent.done:
-            print(jc_agent.estimated_cycle)
-            break
-
-        # mc_agent.step()
-        # if mc_agent.done:
-        #     instant_training(mc_agent.results)
+        # jc_agent.step()
+        # if jc_agent.done:
+        #     print(jc_agent.estimated_cycle)
         #     break
 
-
-def instant_training(results: List[CheckResult]):
-    frame_shape = list(results[0].frame0.shape)
-    frame_shape[-1] *= 2
-    input_f01 = Input(shape=frame_shape)
-    x = Conv2D(32, kernel_size=8, strides=4, padding="valid", activation='relu')(input_f01)
-    x = Flatten()(x)
-    forward_back = Dense(3, activation='softmax', name="move_forward_back")(x)
-    move_left_right = Dense(3, activation='softmax', name="move_left_right")(x)
-    camera_left_right = Dense(3, activation='softmax', name="camera_left_right")(x)
-    up_down = Dense(3, activation='softmax', name="up_down")(x)
-    model = Model(input_f01, [forward_back, camera_left_right, up_down, move_left_right])
-    model.compile(Adam(lr=0.001), loss=categorical_crossentropy)
-
-    data_x = []
-    data_y = []
-    for result in results:
-        data_x.append(np.concatenate([result.frame0, result.frame1], axis=2))
-        action = result.action
-        mfb_true = to_onehot(action[0], 3)
-        rlr_true = to_onehot(action[1], 3)
-        ud_true = to_onehot(action[2], 3)
-        mlr_true = to_onehot(action[3], 3)
-        data_y.append([mfb_true, rlr_true, ud_true, mlr_true])
-
-    train_data_x = np.vstack([np.expand_dims(x, axis=0) for x in data_x])
-    train_data_y = [np.array([x[i] for x in data_y]) for i in range(4)]
-
-    while True:
-        model.fit(train_data_x, train_data_y, epochs=10)
-        preds = model.predict(train_data_x)
-        counter = Counter()
-        for pred, true_y in zip(preds, train_data_y):  # forward/back, camera, up_down, left/right
-            for di in range(len(pred)):
-                idx = np.argmax(pred[di])
-                counter["total"] += 1
-                if true_y[di, idx] == 1:
-                    counter["ok"] += 1
-        print(f"accuracy: {100 * counter['ok'] / counter['total']:.1f}% ({counter['ok']}/{counter['total']})")
-
-
-def to_onehot(idx, size):
-    ret = [0] * size
-    ret[idx] = 1
-    return ret
+        mc_agent.step()
+        if mc_agent.done:
+            mc_agent.update_model()
+            mc_agent.reset()
 
 
 ROTATION_CYCLE = 20
