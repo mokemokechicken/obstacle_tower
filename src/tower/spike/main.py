@@ -1,4 +1,5 @@
 from collections import Counter
+from logging import basicConfig, INFO
 from pathlib import Path
 from typing import List
 
@@ -12,6 +13,8 @@ from tensorflow.python.keras.layers import Conv2D, Dense, Flatten
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.optimizers import Adam
 
+from tower.spike.action_cycle_check import ActionCycleCheck
+from tower.spike.const import Action
 from tower.spike.jump_cycle_check import JumpCycleCheck
 from tower.spike.moving_check_agent import MovingCheckAgent, CheckResult
 
@@ -19,6 +22,7 @@ PRJ_ROOT = Path(__file__).parents[3]
 
 
 def main():
+    basicConfig(level=INFO)
     env = ObstacleTowerEnv(str(PRJ_ROOT / 'obstacletower'), retro=False, worker_id=9)
     done = False
     frames = []
@@ -27,7 +31,10 @@ def main():
 
     screen = Screen()
     mc_agent = MovingCheckAgent(env)
-    jc_agent = JumpCycleCheck(env)
+    jc_agent = ActionCycleCheck(env, Action.JUMP)
+
+    for _ in range(20):
+        env.step(Action.FORWARD)
 
     while not done:
         frame = env.render()
@@ -40,7 +47,7 @@ def main():
         #     diff_av_image = np.mean(np.abs(avg_image - last_av_image), axis=2)
         #     screen.show("diff", diff_av_image)
         # last_av_image = avg_image
-        cv2.waitKey(1)
+        cv2.waitKey(0)
         # obs, reward, done, info = env.step(env.action_space.sample())
 
         # obs, reward, done, info = env.step(cc.action)
@@ -48,7 +55,7 @@ def main():
 
         jc_agent.step()
         if jc_agent.done:
-            print(jc_agent.estimated_jump_cycle)
+            print(jc_agent.estimated_cycle)
             break
 
         # mc_agent.step()
