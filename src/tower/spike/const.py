@@ -10,3 +10,4 @@ class Action:
     JUMP = np.array([0, 0, 1, 0])
     RIGHT = np.array([0, 0, 0, 1])
     LEFT = np.array([0, 0, 0, 2])
+

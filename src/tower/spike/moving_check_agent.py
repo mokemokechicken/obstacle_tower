@@ -11,8 +11,10 @@ CheckResult = namedtuple('CheckResult', 'frame0 frame1 action')
 class MovingCheckAgent:
     def __init__(self, env: ObstacleTowerEnv):
         self.env = env
-        self.n_step = 3
-        self.check_actions = [Action.FORWARD, Action.BACK]
+        self.n_step = 20
+        self.check_actions = [Action.NOP, Action.FORWARD, Action.BACK,
+                              Action.CAMERA_RIGHT, Action.LEFT,
+                              Action.RIGHT, Action.LEFT]
         self.state = CheckState()
         self.done = False
         self.results = []
