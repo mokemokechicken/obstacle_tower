@@ -33,12 +33,36 @@ class RandomRepeatActor:
         if self.schedules:
             self.scheduled_action()
         elif self.action is None or np.random.random() >= self.continue_rate:
-            self.action = Action.sample_action()
-            self.to_move_or_camera(self.action)
+            self.action = self.sample_action()
         return self.action
 
+    def sample_action(self):
+        r1 = np.random.random()
+
+        action = Action.NOP
+
+        if r1 < 0.1:
+            return action
+
+        if np.random.random() < 0.2:
+            action += Action.JUMP
+
+        if r1 < 0.5:
+            action += Action.FORWARD
+        elif r1 < 0.6:
+            action += Action.LEFT
+        elif r1 < 0.7:
+            action += Action.RIGHT
+        elif r1 < 0.8:
+            action += Action.CAMERA_LEFT
+        elif r1 < 0.9:
+            action += Action.CAMERA_RIGHT
+        else:
+            action += Action.BACK
+        return action
+
     @staticmethod
-    def to_move_or_camera(action):
+    def restrict_action(action):
         if action[Action.IDX_MOVE_FB] + action[Action.IDX_MOVE_RL] > 0 and action[Action.IDX_CAMERA_LR] > 0:
             if np.random.random() < 0.5:
                 action[Action.IDX_CAMERA_LR] = 0
