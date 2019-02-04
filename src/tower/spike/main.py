@@ -28,7 +28,7 @@ def main():
     env.reset()
 
     screen = Screen()
-    random_actor = RandomRepeatActor(Action.NOP, 0.95)
+    random_actor = RandomRepeatActor(Action.NOP, 0.9)
     random_actor.reset(schedules=[
         (Action.CAMERA_RIGHT, 5),
         (Action.CAMERA_LEFT, 10),
@@ -59,8 +59,11 @@ def main():
         for h in event_handlers:
             h.before_step()
 
-        action = random_actor.decide_action()
+        action = random_actor.decide_action(judger.did_move)
         obs, reward, done, info = env.step(action)
+        if reward != 0:
+            logger.info(f"Get Reward={reward} Keys={obs[1]}")
+        # logger.info(f"Keys={obs[1]} Time Remain={obs[2]}")
 
         params = EventParamsAfterStep(action, obs, reward, done, info)
         for h in event_handlers:

@@ -57,20 +57,20 @@ class JudgeMove(EventHandler):
                 is_nop_action = diff < 3
             if is_nop_action:
                 add_history = False
-                logger.info(f"action={action}, but did not move")
+                logger.info(f"action={action}, but did not move: diff={diff}")
 
         if is_nop_action:
             if add_history and self._last_jump_counter == 0:
-                # logger.info(f"add diff to NOP: {diff}")
+                # logger.info(f"add diff to NOP Diff List: {diff}")
                 self._nop_diffs.append(diff)
                 self._nop_diffs = self._nop_diffs[-100:]
         else:
-            # logger.info(f"add diff to OTHER: {diff}")
+            # logger.info(f"add diff to OTHER Diff List: {diff}")
             self._other_diffs.append(diff)
             self._other_diffs = self._other_diffs[-100:]
         self._did_move = not is_nop_action
 
     def update_dist(self):
         if len(self._nop_diffs) > 3 and len(self._other_diffs) > 3:
-            self._nop_dist = stats.norm(np.mean(self._nop_diffs), np.std(self._nop_diffs))
+            self._nop_dist = stats.norm(np.mean(self._nop_diffs), np.std(self._nop_diffs)+0.1)
             self._other_dist = stats.norm(np.mean(self._other_diffs), np.std(self._other_diffs))

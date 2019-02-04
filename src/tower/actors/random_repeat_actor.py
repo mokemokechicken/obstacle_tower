@@ -19,7 +19,6 @@ class RandomRepeatActor:
         if schedules:
             self.schedules = schedules
             self.schedule_count = 0
-            self.scheduled_action()
 
     def scheduled_action(self):
         if self.schedules:
@@ -29,10 +28,10 @@ class RandomRepeatActor:
                 self.schedules = self.schedules[1:]
                 self.schedule_count = 0
 
-    def decide_action(self):
+    def decide_action(self, did_move=True):
         if self.schedules:
             self.scheduled_action()
-        elif self.action is None or np.random.random() >= self.continue_rate:
+        elif self.action is None or not did_move or np.random.random() >= self.continue_rate:
             self.action = self.sample_action()
         return self.action
 
