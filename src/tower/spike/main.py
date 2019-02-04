@@ -1,18 +1,23 @@
-from logging import basicConfig, INFO
+from logging import basicConfig, INFO, getLogger
 from pathlib import Path
 from typing import List
 
 import cv2
-import numpy as np
 from matplotlib import animation
 from matplotlib import pyplot as plt
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.event_handlers.base import EventParamsAfterStep, EventHandler, FrameHistory, PositionEstimator
+from tower.actors.random_repeat_actor import RandomRepeatActor
 from tower.const import Action
+from tower.event_handlers.base import EventParamsAfterStep, EventHandler
+from tower.event_handlers.frame import FrameHistory
 from tower.event_handlers.judge_move import JudgeMove
+from tower.event_handlers.position_estimator import PositionEstimator
 
 PRJ_ROOT = Path(__file__).parents[3]
+
+
+logger = getLogger(__name__)
 
 
 def main():
@@ -23,15 +28,15 @@ def main():
     env.reset()
 
     screen = Screen()
-    random_action = RandomRepeatAction(Action.NOP, 0.95)
+    random_actor = RandomRepeatActor(Action.NOP, 0.95)
 
     frame_history = FrameHistory(env)
     judger = JudgeMove(frame_history)
-    position_estimator = PositionEstimator()
+    position_estimator = PositionEstimator(judger)
     event_handlers: List[EventHandler] = [
         frame_history,
         judger,
-
+        position_estimator,
     ]
 
     while not done:
@@ -44,14 +49,14 @@ def main():
         for h in event_handlers:
             h.before_step()
 
-        action = random_action.decide_action()
+        action = random_actor.decide_action()
         obs, reward, done, info = env.step(action)
 
         params = EventParamsAfterStep(action, obs, reward, done, info)
         for h in event_handlers:
             h.after_step(params)
 
-        judger.did_move(frame_history.last_small_frame, frame_history.current_small_frame, action)
+        logger.info(f"pos=({position_estimator.px:.1f},{position_estimator.py:.1f}, {position_estimator.pz:.1f})")
 
         if len(frame_history.small_frame_pixel_diffs) > 0:
             screen.show("diff0", frame_history.small_frame_pixel_diffs[-1])
@@ -61,34 +66,6 @@ def main():
 
         for h in event_handlers:
             h.end_loop()
-
-
-class RandomRepeatAction:
-    action = None
-    continue_rate = None
-
-    def __init__(self, action=None, continue_rate=0.95):
-        self.reset(action, continue_rate)
-
-    def reset(self, action=None, continue_rate=None):
-        if continue_rate is not None:
-            self.continue_rate = continue_rate
-        self.action = action
-
-    def decide_action(self):
-        if self.action is None or np.random.random() >= self.continue_rate:
-            self.action = Action.sample_action()
-            self.to_move_or_camera(self.action)
-        return self.action
-
-    @staticmethod
-    def to_move_or_camera(action):
-        if action[Action.IDX_MOVE_FB] + action[Action.IDX_MOVE_RL] > 0 and action[Action.IDX_CAMERA_LR] > 0:
-            if np.random.random() < 0.5:
-                action[Action.IDX_CAMERA_LR] = 0
-            else:
-                action[Action.IDX_MOVE_FB] = 0
-                action[Action.IDX_MOVE_RL] = 0
 
 
 class Screen:
