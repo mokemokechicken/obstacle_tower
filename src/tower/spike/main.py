@@ -30,7 +30,6 @@ def main():
     screen = Screen()
     random_action = RandomRepeatAction(Action.NOP, 0.95)
     judger = JudgeMove()
-    last_small_frame = None
 
     frame_history = FrameHistory(env)
     event_handlers: List[EventHandler] = [
@@ -53,13 +52,16 @@ def main():
         for h in event_handlers:
             h.after_step()
 
-        didnt_move = judger.did_move(frame_history.last_small_frame, frame_history.current_small_frame, action)
+        judger.did_move(frame_history.last_small_frame, frame_history.current_small_frame, action)
+
+        if len(frame_history.small_frame_pixel_diffs) > 0:
+            screen.show("diff0", frame_history.small_frame_pixel_diffs[-1])
+
+        if len(frame_history.small_frame_pixel_diffs) > 1:
+            screen.show("diff1", frame_history.small_frame_pixel_diffs[-2])
 
         for h in event_handlers:
             h.end_loop()
-
-
-
 
 
 class EventHandler:
@@ -99,7 +101,7 @@ class FrameHistory(EventHandler):
     def end_loop(self):
         self.last_frame = self.current_frame
         self.last_small_frame = self.current_small_frame
-        self.current_frame = self.last_small_frame = None
+        self.current_frame = self.current_small_frame = None
 
 
 class RandomRepeatAction:
@@ -117,11 +119,17 @@ class RandomRepeatAction:
     def decide_action(self):
         if self.action is None or np.random.random() >= self.continue_rate:
             self.action = Action.sample_action()
-        else:
-            Action.jump_off(self.action)
-
+            self.to_move_or_camera(self.action)
         return self.action
 
+    @staticmethod
+    def to_move_or_camera(action):
+        if action[Action.IDX_MOVE_FB] + action[Action.IDX_MOVE_RL] > 0 and action[Action.IDX_CAMERA_LR] > 0:
+            if np.random.random() < 0.5:
+                action[Action.IDX_CAMERA_LR] = 0
+            else:
+                action[Action.IDX_MOVE_FB] = 0
+                action[Action.IDX_MOVE_RL] = 0
 
 class Screen:
     def __init__(self):

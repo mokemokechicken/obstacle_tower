@@ -16,6 +16,7 @@ class JudgeMove:
         self._step = 0
         self._nop_dist = None
         self._other_dist = None
+        self._last_jump_counter = 0
 
     def did_move(self, prev_frame, cur_frame, action) -> bool:
         is_nop_action = tuple(action) == tuple(Action.NOP)
@@ -26,6 +27,12 @@ class JudgeMove:
         if self._step == 10:
             self.update_dist()
             self._step = 0
+
+        # if jumped, frame_diff will not be added to history after N(=20) frames.
+        if Action.is_jump_action(action):
+            self._last_jump_counter = 20
+        if self._last_jump_counter > 0:
+            self._last_jump_counter -= 1
 
         if not is_nop_action:
             if self._nop_dist is not None:
@@ -41,7 +48,7 @@ class JudgeMove:
                 logger.info(f"action={action}, but did not move")
 
         if is_nop_action:
-            if add_history:
+            if add_history and self._last_jump_counter == 0:
                 logger.info(f"add diff to NOP: {diff}")
                 self._nop_diffs.append(diff)
                 self._nop_diffs = self._nop_diffs[-100:]

@@ -3,6 +3,7 @@ import numpy as np
 
 ROTATION_CYCLE = 20
 
+
 class Action:
     size = 54
     NOP = np.array([0, 0, 0, 0])
@@ -13,6 +14,11 @@ class Action:
     JUMP = np.array([0, 0, 1, 0])
     RIGHT = np.array([0, 0, 0, 1])
     LEFT = np.array([0, 0, 0, 2])
+
+    IDX_MOVE_FB = 0
+    IDX_CAMERA_LR = 1
+    IDX_JUMP = 2
+    IDX_MOVE_RL = 3
 
     @staticmethod
     def sample_action():
@@ -41,5 +47,5 @@ class Action:
         return action
 
     @staticmethod
-    def jump_off(action):
-        action[2] = 0
+    def is_jump_action(action):
+        return action[Action.IDX_JUMP] == 1
