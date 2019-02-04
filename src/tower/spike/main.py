@@ -1,5 +1,3 @@
-import random
-from collections import Counter
 from logging import basicConfig, INFO
 from pathlib import Path
 from typing import List
@@ -10,12 +8,9 @@ from matplotlib import animation
 from matplotlib import pyplot as plt
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.spike.action_cycle_check import ActionCycleCheck
-from tower.spike.const import Action
-from tower.spike.judge_nop import JudgeMove
-from tower.spike.jump_cycle_check import JumpCycleCheck
-from tower.spike.moving_check_agent import MovingCheckAgent, CheckResult
-from tower.spike.util import average_image, frame_pixel_diff
+from tower.event_handlers.base import EventParamsAfterStep, EventHandler, FrameHistory, PositionEstimator
+from tower.const import Action
+from tower.event_handlers.judge_move import JudgeMove
 
 PRJ_ROOT = Path(__file__).parents[3]
 
@@ -29,11 +24,14 @@ def main():
 
     screen = Screen()
     random_action = RandomRepeatAction(Action.NOP, 0.95)
-    judger = JudgeMove()
 
     frame_history = FrameHistory(env)
+    judger = JudgeMove(frame_history)
+    position_estimator = PositionEstimator()
     event_handlers: List[EventHandler] = [
         frame_history,
+        judger,
+
     ]
 
     while not done:
@@ -49,8 +47,9 @@ def main():
         action = random_action.decide_action()
         obs, reward, done, info = env.step(action)
 
+        params = EventParamsAfterStep(action, obs, reward, done, info)
         for h in event_handlers:
-            h.after_step()
+            h.after_step(params)
 
         judger.did_move(frame_history.last_small_frame, frame_history.current_small_frame, action)
 
@@ -62,46 +61,6 @@ def main():
 
         for h in event_handlers:
             h.end_loop()
-
-
-class EventHandler:
-    def begin_loop(self):
-        pass
-
-    def before_step(self):
-        pass
-
-    def after_step(self):
-        pass
-
-    def end_loop(self):
-        pass
-
-
-class FrameHistory(EventHandler):
-    def __init__(self, env: ObstacleTowerEnv):
-        self.env = env
-        self.last_frame = None
-        self.last_small_frame = None
-        self.current_frame = None
-        self.current_small_frame = None
-        self.small_frame_pixel_diffs = []
-
-    def begin_loop(self):
-        if self.last_frame is None:
-            self.last_frame = self.env.render()
-            self.last_small_frame = average_image(self.last_frame)
-
-    def after_step(self):
-        self.current_frame = self.env.render()
-        self.current_small_frame = average_image(self.current_frame)
-        self.small_frame_pixel_diffs.append(frame_pixel_diff(self.last_small_frame, self.current_small_frame))
-        self.small_frame_pixel_diffs = self.small_frame_pixel_diffs[-2:]
-
-    def end_loop(self):
-        self.last_frame = self.current_frame
-        self.last_small_frame = self.current_small_frame
-        self.current_frame = self.current_small_frame = None
 
 
 class RandomRepeatAction:
@@ -130,6 +89,7 @@ class RandomRepeatAction:
             else:
                 action[Action.IDX_MOVE_FB] = 0
                 action[Action.IDX_MOVE_RL] = 0
+
 
 class Screen:
     def __init__(self):

@@ -3,8 +3,7 @@ from logging import getLogger
 
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.spike.const import Action
-from tower.spike.util import average_image, frame_abs_diff
+from tower.spike.util import average_image
 import numpy as np
 
 logger = getLogger(__name__)

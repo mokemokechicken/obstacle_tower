@@ -2,23 +2,35 @@ from logging import getLogger
 
 from scipy import stats
 
-from tower.spike.const import Action
+from tower.event_handlers.base import EventHandler, EventParamsAfterStep
+from tower.const import Action
+from tower.event_handlers.frame import FrameHistory
 from tower.spike.util import frame_abs_diff
 import numpy as np
 
 logger = getLogger(__name__)
 
 
-class JudgeMove:
-    def __init__(self):
+class JudgeMove(EventHandler):
+    def __init__(self, frame_history: FrameHistory):
+        self.frame_history = frame_history
         self._nop_diffs = []
         self._other_diffs = []
         self._step = 0
         self._nop_dist = None
         self._other_dist = None
         self._last_jump_counter = 0
+        self._did_move = True
 
-    def did_move(self, prev_frame, cur_frame, action) -> bool:
+    @property
+    def did_move(self):
+        return self._did_move
+
+    def after_step(self, params: EventParamsAfterStep):
+        action = params.action
+        prev_frame = self.frame_history.last_small_frame
+        cur_frame = self.frame_history.current_small_frame
+        #
         is_nop_action = tuple(action) == tuple(Action.NOP)
         diff = frame_abs_diff(prev_frame, cur_frame)
         add_history = True
@@ -56,7 +68,7 @@ class JudgeMove:
             logger.info(f"add diff to OTHER: {diff}")
             self._other_diffs.append(diff)
             self._other_diffs = self._other_diffs[-100:]
-        return not is_nop_action
+        self._did_move = not is_nop_action
 
     def update_dist(self):
         if len(self._nop_diffs) > 3 and len(self._other_diffs) > 3:

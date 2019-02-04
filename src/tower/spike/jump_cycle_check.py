@@ -2,7 +2,7 @@ from collections import Counter
 
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.spike.const import Action
+from tower.const import Action
 from tower.spike.util import average_image, frame_abs_diff
 import numpy as np
 

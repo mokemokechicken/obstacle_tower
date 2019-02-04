@@ -9,7 +9,7 @@ from tensorflow.python.keras.layers import Conv2D, Dense, Flatten
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.optimizers import Adam
 
-from tower.spike.const import Action
+from tower.const import Action
 from tower.spike.util import average_image, frame_abs_diff, to_onehot
 
 CheckResult = namedtuple('CheckResult', 'frame0 frame1 action')
