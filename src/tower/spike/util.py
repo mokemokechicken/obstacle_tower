@@ -7,6 +7,10 @@ def average_image(frame, kernel_size=8):
     return np.transpose(np.array(fs), (1, 2, 0))
 
 
+def frame_pixel_diff(f1, f2):
+    return np.mean(np.abs(f1 - f2), axis=2)
+
+
 def frame_abs_diff(f1, f2) -> float:
     return float(np.sum(np.abs(f1 - f2)))
 

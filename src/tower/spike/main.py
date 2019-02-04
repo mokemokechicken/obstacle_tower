@@ -15,7 +15,7 @@ from tower.spike.const import Action
 from tower.spike.judge_nop import JudgeMove
 from tower.spike.jump_cycle_check import JumpCycleCheck
 from tower.spike.moving_check_agent import MovingCheckAgent, CheckResult
-from tower.spike.util import average_image
+from tower.spike.util import average_image, frame_pixel_diff
 
 PRJ_ROOT = Path(__file__).parents[3]
 
@@ -28,59 +28,98 @@ def main():
     env.reset()
 
     screen = Screen()
-    random_action = RandomRepeatAction(Action.NOP, 10)
+    random_action = RandomRepeatAction(Action.NOP, 0.95)
     judger = JudgeMove()
-
-    for _ in range(10):
-        env.step(Action.FORWARD)
-
     last_small_frame = None
 
+    frame_history = FrameHistory(env)
+    event_handlers: List[EventHandler] = [
+        frame_history,
+    ]
+
     while not done:
-        frame = env.render()
+        for h in event_handlers:
+            h.begin_loop()
 
-        if last_small_frame is None:
-            last_small_frame = average_image(frame)
-
-        action = random_action.decide_action()
-        if action is None:
-            random_action.reset()
-            action = random_action.decide_action()
-
-        env.step(action)
-        current_small_frame = average_image(env.render())
-        didnt_move = judger.did_move(last_small_frame, current_small_frame, action)
-        last_small_frame = current_small_frame
-
-        screen.show("original", frame)
+        screen.show("original", frame_history.last_frame)
         cv2.waitKey(0)
 
+        for h in event_handlers:
+            h.before_step()
 
-ROTATION_CYCLE = 20
+        action = random_action.decide_action()
+        obs, reward, done, info = env.step(action)
+
+        for h in event_handlers:
+            h.after_step()
+
+        didnt_move = judger.did_move(frame_history.last_small_frame, frame_history.current_small_frame, action)
+
+        for h in event_handlers:
+            h.end_loop()
+
+
+
+
+
+class EventHandler:
+    def begin_loop(self):
+        pass
+
+    def before_step(self):
+        pass
+
+    def after_step(self):
+        pass
+
+    def end_loop(self):
+        pass
+
+
+class FrameHistory(EventHandler):
+    def __init__(self, env: ObstacleTowerEnv):
+        self.env = env
+        self.last_frame = None
+        self.last_small_frame = None
+        self.current_frame = None
+        self.current_small_frame = None
+        self.small_frame_pixel_diffs = []
+
+    def begin_loop(self):
+        if self.last_frame is None:
+            self.last_frame = self.env.render()
+            self.last_small_frame = average_image(self.last_frame)
+
+    def after_step(self):
+        self.current_frame = self.env.render()
+        self.current_small_frame = average_image(self.current_frame)
+        self.small_frame_pixel_diffs.append(frame_pixel_diff(self.last_small_frame, self.current_small_frame))
+        self.small_frame_pixel_diffs = self.small_frame_pixel_diffs[-2:]
+
+    def end_loop(self):
+        self.last_frame = self.current_frame
+        self.last_small_frame = self.current_small_frame
+        self.current_frame = self.last_small_frame = None
 
 
 class RandomRepeatAction:
     action = None
-    n = None
+    continue_rate = None
 
-    def __init__(self, action=None, n=None):
-        self.reset(action, n)
+    def __init__(self, action=None, continue_rate=0.95):
+        self.reset(action, continue_rate)
 
-    def reset(self, action=None, n=None):
-        if action is None:
-            actions = [Action.NOP, Action.FORWARD, Action.BACK,
-                       Action.CAMERA_RIGHT, Action.CAMERA_LEFT,
-                       Action.JUMP,
-                       Action.LEFT, Action.RIGHT,
-                       ]
-            action = actions[np.random.choice(range(len(actions)))]
+    def reset(self, action=None, continue_rate=None):
+        if continue_rate is not None:
+            self.continue_rate = continue_rate
         self.action = action
-        self.n = n or int(np.random.randint(4, 10))
 
     def decide_action(self):
-        if self.n == 0:
-            return None
-        self.n -= 1
+        if self.action is None or np.random.random() >= self.continue_rate:
+            self.action = Action.sample_action()
+        else:
+            Action.jump_off(self.action)
+
         return self.action
 
 

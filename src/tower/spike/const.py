@@ -1,7 +1,10 @@
 import numpy as np
 
 
+ROTATION_CYCLE = 20
+
 class Action:
+    size = 54
     NOP = np.array([0, 0, 0, 0])
     FORWARD = np.array([1, 0, 0, 0])
     BACK = np.array([2, 0, 0, 0])
@@ -10,6 +13,10 @@ class Action:
     JUMP = np.array([0, 0, 1, 0])
     RIGHT = np.array([0, 0, 0, 1])
     LEFT = np.array([0, 0, 0, 2])
+
+    @staticmethod
+    def sample_action():
+        return Action.from_int(int(np.random.randint(0, Action.size)))
 
     @staticmethod
     def to_int(action) -> int:
