@@ -41,24 +41,24 @@ class RandomRepeatActor:
 
         action = Action.NOP
 
-        if r1 < 0.1:
+        if r1 < 0.03:
             return action
 
         if np.random.random() < 0.2:
-            action += Action.JUMP
+            action = Action.JUMP
 
-        if r1 < 0.5:
-            action += Action.FORWARD
-        elif r1 < 0.6:
-            action += Action.LEFT
+        if r1 < 0.6:
+            action = action + Action.FORWARD
         elif r1 < 0.7:
-            action += Action.RIGHT
+            action = action + Action.LEFT
         elif r1 < 0.8:
-            action += Action.CAMERA_LEFT
-        elif r1 < 0.9:
-            action += Action.CAMERA_RIGHT
+            action = action + Action.RIGHT
+        elif r1 < 0.85:
+            action = action + Action.CAMERA_LEFT
+        elif r1 < 0.95:
+            action = action + Action.CAMERA_RIGHT
         else:
-            action += Action.BACK
+            action = action + Action.BACK
         return action
 
     @staticmethod

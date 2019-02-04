@@ -30,14 +30,14 @@ def main():
     screen = Screen()
     random_actor = RandomRepeatActor(Action.NOP, 0.95)
     random_actor.reset(schedules=[
-        (Action.NOP, 5),
+        (Action.CAMERA_RIGHT, 5),
+        (Action.CAMERA_LEFT, 10),
+        (Action.CAMERA_RIGHT, 5),
+        (Action.NOP, 10),
         (Action.FORWARD, 10),
         (Action.RIGHT, 5),
         (Action.LEFT, 10),
         (Action.RIGHT, 5),
-        (Action.CAMERA_RIGHT, 5),
-        (Action.CAMERA_LEFT, 10),
-        (Action.CAMERA_RIGHT, 5),
     ])
 
     frame_history = FrameHistory(env)
