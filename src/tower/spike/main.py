@@ -29,6 +29,16 @@ def main():
 
     screen = Screen()
     random_actor = RandomRepeatActor(Action.NOP, 0.95)
+    random_actor.reset(schedules=[
+        (Action.NOP, 5),
+        (Action.FORWARD, 10),
+        (Action.RIGHT, 5),
+        (Action.LEFT, 10),
+        (Action.RIGHT, 5),
+        (Action.CAMERA_RIGHT, 5),
+        (Action.CAMERA_LEFT, 10),
+        (Action.CAMERA_RIGHT, 5),
+    ])
 
     frame_history = FrameHistory(env)
     judger = JudgeMove(frame_history)
@@ -55,8 +65,6 @@ def main():
         params = EventParamsAfterStep(action, obs, reward, done, info)
         for h in event_handlers:
             h.after_step(params)
-
-        logger.info(f"pos=({position_estimator.px:.1f},{position_estimator.py:.1f}, {position_estimator.pz:.1f})")
 
         if len(frame_history.small_frame_pixel_diffs) > 0:
             screen.show("diff0", frame_history.small_frame_pixel_diffs[-1])

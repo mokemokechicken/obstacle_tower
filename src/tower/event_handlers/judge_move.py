@@ -50,7 +50,7 @@ class JudgeMove(EventHandler):
             if self._nop_dist is not None:
                 p_nop = self._nop_dist.pdf(diff)
                 p_other = self._other_dist.pdf(diff)
-                logger.info(f"P_nop={p_nop}, P_other={p_other}")
+                # logger.info(f"P_nop={p_nop}, P_other={p_other}")
                 is_nop_action = p_other < p_nop
                 # if is_nop_action:
             else:
@@ -61,11 +61,11 @@ class JudgeMove(EventHandler):
 
         if is_nop_action:
             if add_history and self._last_jump_counter == 0:
-                logger.info(f"add diff to NOP: {diff}")
+                # logger.info(f"add diff to NOP: {diff}")
                 self._nop_diffs.append(diff)
                 self._nop_diffs = self._nop_diffs[-100:]
         else:
-            logger.info(f"add diff to OTHER: {diff}")
+            # logger.info(f"add diff to OTHER: {diff}")
             self._other_diffs.append(diff)
             self._other_diffs = self._other_diffs[-100:]
         self._did_move = not is_nop_action
