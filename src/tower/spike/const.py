@@ -12,5 +12,27 @@ class Action:
     LEFT = np.array([0, 0, 0, 2])
 
     @staticmethod
-    def to_int(action):
-        return action[0]*(3*2*3) + action[1]*(2*3) + action[2]*3 + action[3]
+    def to_int(action) -> int:
+        return int(action[0]*(3*2*3) + action[1]*(2*3) + action[2]*3 + action[3])
+
+    @staticmethod
+    def from_int(idx: int):
+        """
+
+        :param idx:
+        :return:
+
+        >>> all([Action.to_int(Action.from_int(x)) == x for x in range(54)])
+        True
+        """
+        assert 0 <= idx < 54
+        action = np.zeros((4, ), dtype=np.int8)
+        action[0] = idx // (3*2*3)
+        action[1] = (idx % (3*2*3)) // (2*3)
+        action[2] = (idx % (2*3)) // 3
+        action[3] = idx % 3
+        return action
+
+    @staticmethod
+    def jump_off(action):
+        action[2] = 0
