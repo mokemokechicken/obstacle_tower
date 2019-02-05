@@ -16,13 +16,15 @@ class MapObservation(EventHandler):
         self.pos_est = position_estimator
         self.moving_checker = moving_checker
 
-        self.VISIT_SCALE = 10.
+        self.VISIT_SCALE = 2.
         self.VISIT_VALUE = 0.1
         self.WALL_SCALE = 1.
         self.WALL_VALUE = 0.3
+        self.size = 64
 
-        self.visit_map = MapController(size=64, name="visit", scale=self.VISIT_SCALE)
-        self.wall_map = MapController(size=64, name="wall", scale=self.WALL_SCALE)
+        self.visit_map = MapController(size=self.size, name="visit", scale=self.VISIT_SCALE)
+        self.wall_map = MapController(size=self.size, name="wall", scale=self.WALL_SCALE)
+        self.dir_map = DirectionMap(size=self.size)
 
     def after_step(self, params: EventParamsAfterStep):
         self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
@@ -35,11 +37,12 @@ class MapObservation(EventHandler):
     def image(self):
         visit_image = self.get_visit_map_image()
         wall_image = self.get_wall_map_image()
+        dir_image = self.get_direction_image()
 
         visit_image = np.expand_dims(visit_image, axis=2)
         wall_image = np.expand_dims(wall_image, axis=2)
-        dummy = np.zeros_like(wall_image)
-        return np.concatenate([wall_image, visit_image, dummy], axis=2).astype(np.float32)
+        dir_image = np.expand_dims(dir_image, axis=2)
+        return np.concatenate([dir_image, visit_image, wall_image], axis=2).astype(np.float32)
 
     def get_visit_map_image(self):
         x, y = int(self.pos_est.px), int(self.pos_est.py)
@@ -49,17 +52,47 @@ class MapObservation(EventHandler):
         x, y = int(self.pos_est.px), int(self.pos_est.py)
         return self.wall_map.fetch_around(x, y)
 
+    def get_direction_image(self):
+        return self.dir_map.get_map(self.pos_est.direction)
+
     def concat_images(self):
         visit_image = self.get_visit_map_image()
         wall_image = self.get_wall_map_image()
+        dir_image = self.get_direction_image()
 
         visit_image = np.expand_dims(visit_image, axis=2)
         wall_image = np.expand_dims(wall_image, axis=2)
+        dir_image = np.expand_dims(dir_image, axis=2)
         dummy = np.zeros_like(wall_image)
 
         visit_image = np.concatenate([dummy, visit_image, dummy], axis=2).astype(np.float32)
         wall_image = np.concatenate([dummy, dummy, wall_image], axis=2).astype(np.float32)
-        return np.concatenate([visit_image, wall_image], axis=0)
+        dir_image = np.concatenate([dir_image, dummy, dummy], axis=2).astype(np.float32)
+        return np.concatenate([visit_image, wall_image, dir_image], axis=0)
+
+
+class DirectionMap:
+    def __init__(self, size):
+        self.size = size
+        self._cache = {}
+
+    def get_map(self, direction: int):
+        direction = int(direction)
+        if direction not in self._cache:
+            self._cache[direction] = self._make_map(direction)
+        return self._cache[direction]
+
+    def _make_map(self, direction: int):
+        rad = (direction * 18) * math.pi / 180
+        dx = math.cos(rad)
+        dy = math.sin(rad)
+        dir_map = np.zeros((self.size, self.size), dtype=np.float32)
+        px = py = self.size // 2
+        while 0 <= px < self.size and 0 <= py < self.size:
+            dir_map[int(py), int(px)] = 1.
+            px += dx
+            py += dy
+        return dir_map
 
 
 class MapController:

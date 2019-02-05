@@ -25,7 +25,7 @@ def main():
     basicConfig(level=INFO)
     env = ObstacleTowerEnv(str(PRJ_ROOT / 'obstacletower'), retro=False, worker_id=9)
     done = False
-    env.floor(5)
+    env.floor(1)
     env.reset()
 
     screen = Screen()
