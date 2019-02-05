@@ -1,12 +1,12 @@
 from logging import getLogger
 
+import numpy as np
 from scipy import stats
 
-from tower.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.const import Action
-from tower.event_handlers.frame import FrameHistory
+from tower.observation.base import EventHandler, EventParamsAfterStep
+from tower.observation.frame import FrameHistory
 from tower.spike.util import frame_abs_diff
-import numpy as np
 
 logger = getLogger(__name__)
 
@@ -72,5 +72,5 @@ class MovingChecker(EventHandler):
 
     def update_dist(self):
         if len(self._nop_diffs) > 3 and len(self._other_diffs) > 3:
-            self._nop_dist = stats.norm(np.mean(self._nop_diffs), np.std(self._nop_diffs)+0.1)
+            self._nop_dist = stats.norm(np.mean(self._nop_diffs), np.std(self._nop_diffs) + 0.1)
             self._other_dist = stats.norm(np.mean(self._other_diffs), np.std(self._other_diffs))

@@ -13,6 +13,7 @@ from tower.event_handlers.map_observation import MapObservation
 from tower.event_handlers.moving_checker import MovingChecker
 from tower.event_handlers.position_estimator import PositionEstimator
 from tower.lib.screen import Screen
+from tower.observation.manager import ObservationManager
 
 logger = getLogger(__name__)
 
@@ -24,14 +25,16 @@ def start(config: Config):
 class PlayCommand:
     def __init__(self, config: Config):
         self.config = config
+        self.screen: Screen = None
 
     def start(self):
         env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=9)
-        done = False
-        env.floor(1)
-        env.reset()
+        self.screen = Screen(render=self.config.play.render)
 
-        screen = Screen(render=self.config.play.render)
+        obs = ObservationManager(self.config, env)
+        done = False
+        obs.floor(1)
+        obs.reset()
         random_actor = RandomRepeatActor(continue_rate=0.9)
         random_actor.reset(schedules=[
             (Action.CAMERA_RIGHT, 3),
@@ -44,45 +47,24 @@ class PlayCommand:
             (Action.RIGHT, 2),
         ])
 
-        frame_history = FrameHistory(env)
-        moving_checker = MovingChecker(frame_history)
-        position_estimator = PositionEstimator(moving_checker)
-        map_observation = MapObservation(position_estimator, moving_checker)
-        event_handlers: List[EventHandler] = [
-            frame_history,
-            moving_checker,
-            position_estimator,
-            map_observation,
-        ]
-
         while not done:
-            for h in event_handlers:
-                h.begin_loop()
+            obs.begin_loop()
+            self.show_information(obs)
 
-            screen.show("original", frame_history.last_frame)
-            cv2.waitKey(self.config.play.wait_per_frame)
-
-            for h in event_handlers:
-                h.before_step()
-
-            action = random_actor.decide_action(moving_checker.did_move)
+            action = random_actor.decide_action(obs.moving_checker.did_move)
             obs, reward, done, info = env.step(action)
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
-            # logger.info(f"Keys={obs[1]} Time Remain={obs[2]}")
+            obs.end_loop()
 
-            params = EventParamsAfterStep(action, obs, reward, done, info)
-            for h in event_handlers:
-                h.after_step(params)
+    def show_information(self, obs: ObservationManager):
+        self.screen.show("original", obs.frame_history.last_frame)
+        self.screen.show("map", obs.map_observation.concat_images())
+        cv2.waitKey(self.config.play.wait_per_frame)
 
-            screen.show("map", map_observation.concat_images())
-
-            if len(frame_history.small_frame_pixel_diffs) > 0:
-                f1 = frame_history.small_frame_pixel_diffs[-1]
-                if len(frame_history.small_frame_pixel_diffs) > 1:
-                    f2 = frame_history.small_frame_pixel_diffs[-2]
-                    f1 = np.concatenate((f2, f1), axis=1)
-                screen.show("diff", f1)
-
-            for h in event_handlers:
-                h.end_loop()
+        if len(obs.frame_history.small_frame_pixel_diffs) > 0:
+            f1 = obs.frame_history.small_frame_pixel_diffs[-1]
+            if len(obs.frame_history.small_frame_pixel_diffs) > 1:
+                f2 = obs.frame_history.small_frame_pixel_diffs[-2]
+                f1 = np.concatenate((f2, f1), axis=1)
+            self.screen.show("diff", f1)

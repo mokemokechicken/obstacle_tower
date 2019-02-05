@@ -1,6 +1,6 @@
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.event_handlers.base import EventHandler, EventParamsAfterStep
+from tower.observation.base import EventHandler, EventParamsAfterStep
 from tower.spike.util import average_image, frame_pixel_diff
 
 

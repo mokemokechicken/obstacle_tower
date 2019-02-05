@@ -2,9 +2,9 @@ import math
 from logging import getLogger
 
 from tower.const import Action
-from tower.event_handlers.base import EventHandler, EventParamsAfterStep
-from tower.event_handlers.moving_checker import MovingChecker
-from tower.event_handlers.position_estimator import PositionEstimator
+from tower.observation.base import EventHandler, EventParamsAfterStep
+from tower.observation.moving_checker import MovingChecker
+from tower.observation.position_estimator import PositionEstimator
 
 import numpy as np
 

@@ -1,10 +1,9 @@
 import math
 from logging import getLogger
 
-from tower.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.const import ROTATION_CYCLE, Action
-from tower.event_handlers.moving_checker import MovingChecker
-
+from tower.observation.base import EventHandler, EventParamsAfterStep
+from tower.observation.moving_checker import MovingChecker
 
 logger = getLogger(__name__)
 
@@ -17,7 +16,7 @@ class PositionEstimator(EventHandler):
         self.dx = 0
         self.dy = 0
         self.direction = 15  # 0~19: 0 is direction=(1, 0, 0), 5 is direction=(0, 1, 0), 15 is (0, -1, 0)
-        self.d_size = 1.
+        self.d_size = 1.  # 1行動毎の論理的な移動幅
         self.judger = judger
         self.last_action = None
 
