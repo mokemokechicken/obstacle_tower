@@ -1,17 +1,12 @@
 from logging import getLogger
-from typing import List
-import numpy as np
+
 import cv2
+import numpy as np
 from obstacle_tower_env import ObstacleTowerEnv
 
 from tower.actors.random_repeat_actor import RandomRepeatActor
 from tower.config import Config
 from tower.const import Action
-from tower.event_handlers.base import EventHandler, EventParamsAfterStep
-from tower.event_handlers.frame import FrameHistory
-from tower.event_handlers.map_observation import MapObservation
-from tower.event_handlers.moving_checker import MovingChecker
-from tower.event_handlers.position_estimator import PositionEstimator
 from tower.lib.screen import Screen
 from tower.observation.manager import ObservationManager
 
@@ -31,10 +26,10 @@ class PlayCommand:
         env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=9)
         self.screen = Screen(render=self.config.play.render)
 
-        obs = ObservationManager(self.config, env)
+        observation = ObservationManager(self.config, env)
         done = False
-        obs.floor(1)
-        obs.reset()
+        observation.floor(1)
+        observation.reset()
         random_actor = RandomRepeatActor(continue_rate=0.9)
         random_actor.reset(schedules=[
             (Action.CAMERA_RIGHT, 3),
@@ -48,14 +43,14 @@ class PlayCommand:
         ])
 
         while not done:
-            obs.begin_loop()
-            self.show_information(obs)
+            observation.begin_loop()
+            self.show_information(observation)
 
-            action = random_actor.decide_action(obs.moving_checker.did_move)
+            action = random_actor.decide_action(observation.moving_checker.did_move)
             obs, reward, done, info = env.step(action)
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
-            obs.end_loop()
+            observation.end_loop()
 
     def show_information(self, obs: ObservationManager):
         self.screen.show("original", obs.frame_history.last_frame)
