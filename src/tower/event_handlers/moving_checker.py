@@ -11,7 +11,7 @@ import numpy as np
 logger = getLogger(__name__)
 
 
-class JudgeMove(EventHandler):
+class MovingChecker(EventHandler):
     def __init__(self, frame_history: FrameHistory):
         self.frame_history = frame_history
         self._nop_diffs = []

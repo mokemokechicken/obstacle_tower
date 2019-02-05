@@ -3,14 +3,14 @@ from logging import getLogger
 
 from tower.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.const import ROTATION_CYCLE, Action
-from tower.event_handlers.judge_move import JudgeMove
+from tower.event_handlers.moving_checker import MovingChecker
 
 
 logger = getLogger(__name__)
 
 
 class PositionEstimator(EventHandler):
-    def __init__(self, judger: JudgeMove):
+    def __init__(self, judger: MovingChecker):
         self.px = 0
         self.py = 0
         self.pz = 0

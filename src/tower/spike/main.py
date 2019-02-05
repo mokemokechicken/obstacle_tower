@@ -11,7 +11,8 @@ from tower.actors.random_repeat_actor import RandomRepeatActor
 from tower.const import Action
 from tower.event_handlers.base import EventParamsAfterStep, EventHandler
 from tower.event_handlers.frame import FrameHistory
-from tower.event_handlers.judge_move import JudgeMove
+from tower.event_handlers.moving_checker import MovingChecker
+from tower.event_handlers.map_observation import MapObservation
 from tower.event_handlers.position_estimator import PositionEstimator
 
 PRJ_ROOT = Path(__file__).parents[3]
@@ -28,7 +29,7 @@ def main():
     env.reset()
 
     screen = Screen()
-    random_actor = RandomRepeatActor(Action.NOP, 0.9)
+    random_actor = RandomRepeatActor(continue_rate=0.9)
     random_actor.reset(schedules=[
         (Action.CAMERA_RIGHT, 5),
         (Action.CAMERA_LEFT, 10),
@@ -41,12 +42,14 @@ def main():
     ])
 
     frame_history = FrameHistory(env)
-    judger = JudgeMove(frame_history)
-    position_estimator = PositionEstimator(judger)
+    moving_checker = MovingChecker(frame_history)
+    position_estimator = PositionEstimator(moving_checker)
+    map_observation = MapObservation(position_estimator, moving_checker)
     event_handlers: List[EventHandler] = [
         frame_history,
-        judger,
+        moving_checker,
         position_estimator,
+        map_observation,
     ]
 
     while not done:
@@ -59,7 +62,7 @@ def main():
         for h in event_handlers:
             h.before_step()
 
-        action = random_actor.decide_action(judger.did_move)
+        action = random_actor.decide_action(moving_checker.did_move)
         obs, reward, done, info = env.step(action)
         if reward != 0:
             logger.info(f"Get Reward={reward} Keys={obs[1]}")
