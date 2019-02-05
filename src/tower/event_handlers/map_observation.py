@@ -25,6 +25,16 @@ class MapObservation(EventHandler):
         if self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):
             self.wall_map.add_value(self.pos_est.px+self.pos_est.dx, self.pos_est.py+self.pos_est.dy, 0.1)
 
+    def image(self):
+        x, y = int(self.pos_est.px), int(self.pos_est.py)
+        visit_image = self.visit_map.fetch_around(x, y)
+        wall_image = self.wall_map.fetch_around(x, y)
+
+        visit_image = np.expand_dims(visit_image, axis=2)
+        wall_image = np.expand_dims(wall_image, axis=2)
+        dummy = np.zeros_like(wall_image)
+        return np.concatenate([wall_image, visit_image, dummy], axis=2)
+
 
 class MapController:
     def __init__(self, size=64, min_value=0., max_value=1.):

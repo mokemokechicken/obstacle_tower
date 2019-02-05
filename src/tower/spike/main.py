@@ -72,6 +72,8 @@ def main():
         for h in event_handlers:
             h.after_step(params)
 
+        screen.show("map", map_observation.image())
+
         if len(frame_history.small_frame_pixel_diffs) > 0:
             screen.show("diff0", frame_history.small_frame_pixel_diffs[-1])
 
