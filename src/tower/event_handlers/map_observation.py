@@ -17,12 +17,12 @@ class MapObservation(EventHandler):
         self.moving_checker = moving_checker
 
         self.VISIT_SCALE = 10.
-        self.VISIT_VALUE = 1 / self.VISIT_SCALE
+        self.VISIT_VALUE = 0.1
         self.WALL_SCALE = 1.
-        self.WALL_VALUE = 0.2
+        self.WALL_VALUE = 0.3
 
-        self.visit_map = MapController(name="visit", scale=self.VISIT_SCALE)
-        self.wall_map = MapController(name="wall", scale=self.WALL_SCALE)
+        self.visit_map = MapController(size=64, name="visit", scale=self.VISIT_SCALE)
+        self.wall_map = MapController(size=64, name="wall", scale=self.WALL_SCALE)
 
     def after_step(self, params: EventParamsAfterStep):
         self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
@@ -33,14 +33,33 @@ class MapObservation(EventHandler):
                                     self.WALL_VALUE)
 
     def image(self):
-        x, y = int(self.pos_est.px), int(self.pos_est.py)
-        visit_image = self.visit_map.fetch_around(x, y)
-        wall_image = self.wall_map.fetch_around(x, y)
+        visit_image = self.get_visit_map_image()
+        wall_image = self.get_wall_map_image()
 
         visit_image = np.expand_dims(visit_image, axis=2)
         wall_image = np.expand_dims(wall_image, axis=2)
         dummy = np.zeros_like(wall_image)
         return np.concatenate([wall_image, visit_image, dummy], axis=2).astype(np.float32)
+
+    def get_visit_map_image(self):
+        x, y = int(self.pos_est.px), int(self.pos_est.py)
+        return self.visit_map.fetch_around(x, y)
+
+    def get_wall_map_image(self):
+        x, y = int(self.pos_est.px), int(self.pos_est.py)
+        return self.wall_map.fetch_around(x, y)
+
+    def concat_images(self):
+        visit_image = self.get_visit_map_image()
+        wall_image = self.get_wall_map_image()
+
+        visit_image = np.expand_dims(visit_image, axis=2)
+        wall_image = np.expand_dims(wall_image, axis=2)
+        dummy = np.zeros_like(wall_image)
+
+        visit_image = np.concatenate([dummy, visit_image, dummy], axis=2).astype(np.float32)
+        wall_image = np.concatenate([dummy, dummy, wall_image], axis=2).astype(np.float32)
+        return np.concatenate([visit_image, wall_image], axis=0)
 
 
 class MapController:

@@ -25,20 +25,20 @@ def main():
     basicConfig(level=INFO)
     env = ObstacleTowerEnv(str(PRJ_ROOT / 'obstacletower'), retro=False, worker_id=9)
     done = False
-    env.floor(1)
+    env.floor(5)
     env.reset()
 
     screen = Screen()
     random_actor = RandomRepeatActor(continue_rate=0.9)
     random_actor.reset(schedules=[
-        (Action.CAMERA_RIGHT, 5),
-        (Action.CAMERA_LEFT, 10),
-        (Action.CAMERA_RIGHT, 5),
-        (Action.NOP, 10),
-        (Action.FORWARD, 10),
-        (Action.RIGHT, 5),
-        (Action.LEFT, 10),
-        (Action.RIGHT, 5),
+        (Action.CAMERA_RIGHT, 3),
+        (Action.CAMERA_LEFT, 6),
+        (Action.CAMERA_RIGHT, 3),
+        (Action.NOP, 5),
+        (Action.FORWARD, 8),
+        (Action.RIGHT, 2),
+        (Action.LEFT, 4),
+        (Action.RIGHT, 2),
     ])
 
     frame_history = FrameHistory(env)
@@ -72,7 +72,7 @@ def main():
         for h in event_handlers:
             h.after_step(params)
 
-        screen.show("map", map_observation.image())
+        screen.show("map", map_observation.concat_images())
 
         if len(frame_history.small_frame_pixel_diffs) > 0:
             f1 = frame_history.small_frame_pixel_diffs[-1]
@@ -83,8 +83,6 @@ def main():
 
         for h in event_handlers:
             h.end_loop()
-
-    logger.info(np.sum(map_observation.image()))
 
 
 class Screen:
