@@ -4,10 +4,13 @@ from matplotlib import pyplot as plt
 
 
 class Screen:
-    def __init__(self):
+    def __init__(self, render=True):
         self._windows = {}
+        self._render = render
 
     def show(self, window_name, image):
+        if not self._render:
+            return
         if window_name not in self._windows:
             self.setup_window(window_name)
         cv2.imshow(window_name, image)

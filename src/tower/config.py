@@ -27,6 +27,7 @@ def load_config(config_path=None):
 class Config(ConfigBase):
     def __init__(self):
         self.resource = ResourceConfig()
+        self.play = PlayConfig()
 
 
 class ResourceConfig(ConfigBase):
@@ -34,3 +35,9 @@ class ResourceConfig(ConfigBase):
         self.obstacle_tower_path = _project_base_dir() / "obstacletower"
         self.log_file_path = _project_base_dir() / "log" / "tower.log"
         self.working_dir = _project_base_dir() / "tmp" / "working"
+
+
+class PlayConfig(ConfigBase):
+    def __init__(self):
+        self.render = False
+        self.wait_per_frame = 1

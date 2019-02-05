@@ -11,6 +11,8 @@ logger = getLogger(__name__)
 def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', help="config file path", dest="config")
+    parser.add_argument('--render', help="render screen when playing", action="store_true")
+    parser.add_argument('--wait', type=int, help="wait milli seconds per frame (0 is forever)")
     return parser
 
 
@@ -19,5 +21,10 @@ def start():
     args = parser.parse_args()
     config = load_config(args.config)
     setup_logger(config.resource.log_file_path, 'info')
+
+    if args.render:
+        config.play.render = args.render
+    if args.wait is not None:
+        config.play.wait_per_frame = args.wait
 
     play.start(config)

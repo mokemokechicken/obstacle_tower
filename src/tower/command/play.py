@@ -18,10 +18,10 @@ logger = getLogger(__name__)
 
 
 def start(config: Config):
-    StartCommand(config).start()
+    PlayCommand(config).start()
 
 
-class StartCommand:
+class PlayCommand:
     def __init__(self, config: Config):
         self.config = config
 
@@ -31,7 +31,7 @@ class StartCommand:
         env.floor(1)
         env.reset()
 
-        screen = Screen()
+        screen = Screen(render=self.config.play.render)
         random_actor = RandomRepeatActor(continue_rate=0.9)
         random_actor.reset(schedules=[
             (Action.CAMERA_RIGHT, 3),
@@ -60,7 +60,7 @@ class StartCommand:
                 h.begin_loop()
 
             screen.show("original", frame_history.last_frame)
-            cv2.waitKey(0)
+            cv2.waitKey(self.config.play.wait_per_frame)
 
             for h in event_handlers:
                 h.before_step()
