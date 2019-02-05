@@ -15,17 +15,17 @@ class MapObservation(EventHandler):
     def __init__(self, position_estimator: PositionEstimator, moving_checker: MovingChecker):
         self.pos_est = position_estimator
         self.moving_checker = moving_checker
-        self.visit_map = MapController(name="visit")
-        self.wall_map = MapController(name="wall")
 
         self.VISIT_SCALE = 10.
         self.VISIT_VALUE = 1 / self.VISIT_SCALE
         self.WALL_SCALE = 1.
         self.WALL_VALUE = 0.2
 
+        self.visit_map = MapController(name="visit", scale=self.VISIT_SCALE)
+        self.wall_map = MapController(name="wall", scale=self.WALL_SCALE)
+
     def after_step(self, params: EventParamsAfterStep):
-        self.visit_map.add_value(self.pos_est.px / self.VISIT_SCALE, self.pos_est.py / self.VISIT_SCALE,
-                                 self.VISIT_VALUE)
+        self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
 
         action = params.action
         if not self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):
@@ -44,7 +44,7 @@ class MapObservation(EventHandler):
 
 
 class MapController:
-    def __init__(self, size=64, min_value=0., max_value=1., name=None):
+    def __init__(self, size=64, min_value=0., max_value=1., name=None, scale=1.):
         assert size % 2 == 0
         self.size = size
         self.map = np.zeros((size * 3, size * 3), dtype=np.float16)  # (y, x)
@@ -52,15 +52,18 @@ class MapController:
         self.min_value = min_value
         self.max_value = max_value
         self.name = name
+        self.scale = scale
 
     def add_value(self, x: int, y: int, value: float):
-        x, y = int(x), int(y)
+        x, y = int(x/self.scale), int(y/self.scale)
         self._check_view_bounding_box(x, y)
-        self.map[y, x] = float(np.clip(self.map[y, x] + value, self.min_value, self.max_value))
-        logger.info(f"map {self.name or ''}({x},{y})={self.map[y, x]}")
+        mx = x + self.offset_origin_x
+        my = y + self.offset_origin_y
+        self.map[my, mx] = float(np.clip(self.map[my, mx] + value, self.min_value, self.max_value))
+        logger.info(f"map {self.name or ''}({x},{y})={self.map[my, mx]}")
 
     def fetch_around(self, x: int, y: int) -> np.ndarray:
-        x, y = int(x), int(y)
+        x, y = int(x/self.scale), int(y/self.scale)
         self._check_view_bounding_box(x, y)
         x0, y0, x1, y1 = self.view_box(x, y)
         return self.map[y0:y1, x0:x1]
@@ -108,3 +111,4 @@ class MapController:
             del self.map
             self.map = new_map
             # offset_origin_y is not changed
+        logger.info(f"expanded map to {self.map.shape}")
