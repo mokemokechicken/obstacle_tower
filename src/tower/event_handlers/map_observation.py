@@ -1,5 +1,6 @@
 import math
 
+from tower.const import Action
 from tower.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.event_handlers.moving_checker import MovingChecker
 from tower.event_handlers.position_estimator import PositionEstimator
@@ -14,8 +15,15 @@ class MapObservation(EventHandler):
         self.visit_map = MapController()
         self.wall_map = MapController()
 
+        self.MAP_SCALE = 20.
+        self.WALL_SCALE = 1.
+
     def after_step(self, params: EventParamsAfterStep):
-        pass
+        self.visit_map.add_value(self.pos_est.px/self.MAP_SCALE, self.pos_est.py/self.MAP_SCALE, 1/self.MAP_SCALE)
+
+        action = params.action
+        if self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):
+            self.wall_map.add_value(self.pos_est.px+self.pos_est.dx, self.pos_est.py+self.pos_est.dy, 0.1)
 
 
 class MapController:
