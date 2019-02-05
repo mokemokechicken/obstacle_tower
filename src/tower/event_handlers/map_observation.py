@@ -1,4 +1,5 @@
 import math
+from logging import getLogger
 
 from tower.const import Action
 from tower.event_handlers.base import EventHandler, EventParamsAfterStep
@@ -7,25 +8,27 @@ from tower.event_handlers.position_estimator import PositionEstimator
 
 import numpy as np
 
+logger = getLogger(__name__)
+
 
 class MapObservation(EventHandler):
     def __init__(self, position_estimator: PositionEstimator, moving_checker: MovingChecker):
         self.pos_est = position_estimator
         self.moving_checker = moving_checker
-        self.visit_map = MapController()
-        self.wall_map = MapController()
+        self.visit_map = MapController(name="visit")
+        self.wall_map = MapController(name="wall")
 
-        self.VISIT_SCALE = 20.
+        self.VISIT_SCALE = 10.
         self.VISIT_VALUE = 1 / self.VISIT_SCALE
         self.WALL_SCALE = 1.
-        self.WALL_VALUE = 0.1
+        self.WALL_VALUE = 0.2
 
     def after_step(self, params: EventParamsAfterStep):
         self.visit_map.add_value(self.pos_est.px / self.VISIT_SCALE, self.pos_est.py / self.VISIT_SCALE,
                                  self.VISIT_VALUE)
 
         action = params.action
-        if self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):
+        if not self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):
             self.wall_map.add_value(self.pos_est.px + self.pos_est.dx, self.pos_est.py + self.pos_est.dy,
                                     self.WALL_VALUE)
 
@@ -41,18 +44,20 @@ class MapObservation(EventHandler):
 
 
 class MapController:
-    def __init__(self, size=64, min_value=0., max_value=1.):
+    def __init__(self, size=64, min_value=0., max_value=1., name=None):
         assert size % 2 == 0
         self.size = size
         self.map = np.zeros((size * 3, size * 3), dtype=np.float16)  # (y, x)
         self.offset_origin_x = self.offset_origin_y = int(size * 1.5)
         self.min_value = min_value
         self.max_value = max_value
+        self.name = name
 
     def add_value(self, x: int, y: int, value: float):
         x, y = int(x), int(y)
         self._check_view_bounding_box(x, y)
         self.map[y, x] = float(np.clip(self.map[y, x] + value, self.min_value, self.max_value))
+        logger.info(f"map {self.name or ''}({x},{y})={self.map[y, x]}")
 
     def fetch_around(self, x: int, y: int) -> np.ndarray:
         x, y = int(x), int(y)

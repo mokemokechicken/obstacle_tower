@@ -14,9 +14,9 @@ from tower.event_handlers.frame import FrameHistory
 from tower.event_handlers.moving_checker import MovingChecker
 from tower.event_handlers.map_observation import MapObservation
 from tower.event_handlers.position_estimator import PositionEstimator
+import numpy as np
 
 PRJ_ROOT = Path(__file__).parents[3]
-
 
 logger = getLogger(__name__)
 
@@ -72,16 +72,19 @@ def main():
         for h in event_handlers:
             h.after_step(params)
 
-        screen.show("map", map_observation.image())
+        screen.show("map", map_observation.image() * 200)
 
         if len(frame_history.small_frame_pixel_diffs) > 0:
-            screen.show("diff0", frame_history.small_frame_pixel_diffs[-1])
-
-        if len(frame_history.small_frame_pixel_diffs) > 1:
-            screen.show("diff1", frame_history.small_frame_pixel_diffs[-2])
+            f1 = frame_history.small_frame_pixel_diffs[-1]
+            if len(frame_history.small_frame_pixel_diffs) > 1:
+                f2 = frame_history.small_frame_pixel_diffs[-2]
+                f1 = np.concatenate((f2, f1), axis=1)
+            screen.show("diff", f1)
 
         for h in event_handlers:
             h.end_loop()
+
+    logger.info(np.sum(map_observation.image()))
 
 
 class Screen:
