@@ -1,6 +1,7 @@
 import gzip
 import pickle
 from datetime import datetime
+from typing import Iterator
 from uuid import uuid4
 
 from tower.config import Config
@@ -11,6 +12,9 @@ class Memory:
         pass
 
     def store(self, data):
+        pass
+
+    def episodes(self) -> Iterator:
         pass
 
 
@@ -28,3 +32,15 @@ class FileMemory(Memory):
 
         with gzip.open(path, mode="wb") as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def episodes(self) -> Iterator:
+        return self.base_dir.glob("*.pkl.gz")
+
+    def load_episodes(self, episode_list):
+        ret = []
+        for episode_name in episode_list:
+            path = self.base_dir / episode_name
+            with gzip.open(path, mode="rb") as f:
+                data = pickle.load(f)
+                ret.append(data)
+        return ret

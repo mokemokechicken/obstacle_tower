@@ -29,7 +29,7 @@ class TrainingDataRecorder(EventHandler):
     def end_episode(self, ep: int):
         data = {
             "meta": self.create_meta_info(),
-            "data": self.data,
+            "steps": self.data,
         }
         self.memory.store(data)
 
