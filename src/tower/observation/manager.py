@@ -69,6 +69,10 @@ class ObservationManager:
     def floor(self, floor):
         return self._env.floor(floor)
 
+    def begin_episode(self, ep: int):
+        for h in self._event_handlers.values():
+            h.begin_episode(ep)
+
     def begin_loop(self):
         for h in self._event_handlers.values():
             h.begin_loop()
@@ -84,3 +88,7 @@ class ObservationManager:
     def end_loop(self):
         for h in self._event_handlers.values():
             h.end_loop()
+
+    def end_episode(self, ep: int):
+        for h in self._event_handlers.values():
+            h.end_episode(ep)

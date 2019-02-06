@@ -7,6 +7,9 @@ class EventHandler:
     def reset(self):
         pass
 
+    def begin_episode(self, ep: int):
+        pass
+
     def begin_loop(self):
         pass
 
@@ -17,5 +20,8 @@ class EventHandler:
         pass
 
     def end_loop(self):
+        pass
+
+    def end_episode(self, ep: int):
         pass
 
