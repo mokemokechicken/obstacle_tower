@@ -1,3 +1,4 @@
+import gzip
 import pickle
 from datetime import datetime
 from uuid import uuid4
@@ -23,6 +24,7 @@ class FileMemory(Memory):
 
     def store(self, data):
         dt = datetime.now().strftime('%Y%m%d_%H%M%S')
-        path = self.base_dir / f"{dt}_{uuid4().hex}.pkl"
-        with path.open(mode="wb") as f:
+        path = self.base_dir / f"{dt}_{uuid4().hex}.pkl.gz"
+
+        with gzip.open(path, mode="wb") as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)

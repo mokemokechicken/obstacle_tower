@@ -1,11 +1,11 @@
 import time
 
+import numpy as np
+
 from tower.config import Config
 from tower.lib.memory import Memory
 from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.observation.manager import ObservationManager
-from tower.spike.util import average_image
-import numpy as np
 
 
 class TrainingDataRecorder(EventHandler):
