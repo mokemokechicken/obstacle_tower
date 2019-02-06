@@ -18,8 +18,8 @@ class PlayCommand:
         self.config = config
         self.screen: Screen = None
 
-    def start(self, agent_cls):
-        env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=9)
-        agent: AgentBase = agent_cls(self.config, env)
+    def start(self, agent_cls, env_id=1):
+        env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=env_id)
+        agent: AgentBase = agent_cls(self.config, env, env_id=env_id)
         agent.setup()
         agent.play()

@@ -3,7 +3,9 @@ from logging import getLogger
 from tower.actors.random_repeat_actor import RandomRepeatActor
 from tower.agents.base import AgentBase
 from tower.const import Action
+from tower.lib.memory import FileMemory
 from tower.observation.event_handlers.infomation import InformationHandler
+from tower.observation.event_handlers.training_data_recorder import TrainingDataRecorder
 from tower.observation.manager import ObservationManager
 
 logger = getLogger(__name__)
@@ -17,8 +19,12 @@ class RandomAgent(AgentBase):
         self.observation = ObservationManager(self.config, self.env)
         self.observation.setup()
         self.actor = self.create_random_actor()
+
         if self.config.play.render:
             self.observation.add_event_handler("info", InformationHandler(self.config, self.observation))
+
+        recorder = TrainingDataRecorder(self.config, FileMemory(self.config))
+        self.observation.add_event_handler("recorder", recorder)
 
     @staticmethod
     def create_random_actor():

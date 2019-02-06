@@ -37,6 +37,7 @@ class ResourceConfig(ConfigBase):
         self.obstacle_tower_path = _project_base_dir() / "obstacletower"
         self.log_file_path = _project_base_dir() / "log" / "tower.log"
         self.working_dir = _project_base_dir() / "tmp" / "working"
+        self.memory_dir = _project_base_dir() / "data" / "memory"
 
 
 class PlayConfig(ConfigBase):
