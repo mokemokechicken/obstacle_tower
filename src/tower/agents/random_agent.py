@@ -23,7 +23,7 @@ class RandomAgent(AgentBase):
         if self.config.play.render:
             self.observation.add_event_handler("info", InformationHandler(self.config, self.observation))
 
-        recorder = TrainingDataRecorder(self.config, FileMemory(self.config))
+        recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
         self.observation.add_event_handler("recorder", recorder)
 
     @staticmethod

@@ -52,8 +52,9 @@ class MapController:
         self._check_view_bounding_box(x, y)
         mx = x + self.offset_origin_x
         my = y + self.offset_origin_y
-        self.map[my, mx] = float(np.clip(self.map[my, mx] + value, self.min_value, self.max_value))
+        value = self.map[my, mx] = float(np.clip(self.map[my, mx] + value, self.min_value, self.max_value))
         logger.debug(f"map {self.name or ''}({x},{y})={self.map[my, mx]}")
+        return value
 
     def fetch_around(self, x: int, y: int) -> np.ndarray:
         x, y = int(x/self.scale), int(y/self.scale)
@@ -123,15 +124,17 @@ class MapObservation(EventHandler):
         self.WALL_SCALE = mc.wall_map_scale
         self.WALL_VALUE = mc.wall_map_value
         self.size = mc.map_size
+        self.last_visit_value = 0
         self.reset()
 
     def reset(self):
         self.visit_map = MapController(size=self.size, name="visit", scale=self.VISIT_SCALE)
         self.wall_map = MapController(size=self.size, name="wall", scale=self.WALL_SCALE)
         self.dir_map = DirectionMap(size=self.size)
+        self.last_visit_value = 0
 
     def after_step(self, params: EventParamsAfterStep):
-        self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
+        self.last_visit_value = self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
 
         action = params.action
         if not self.moving_checker.did_move and (action[Action.IDX_MOVE_FB] > 0 or action[Action.IDX_MOVE_RL] > 0):

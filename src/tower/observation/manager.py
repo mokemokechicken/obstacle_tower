@@ -51,19 +51,19 @@ class ObservationManager:
         return self._event_handlers.get(name)
 
     @property
-    def frame_history(self):
+    def frame_history(self) -> FrameHistory:
         return self.get_event_handler("frame_history")
 
     @property
-    def moving_checker(self):
+    def moving_checker(self) -> MovingChecker:
         return self.get_event_handler("moving_checker")
 
     @property
-    def position_estimator(self):
+    def position_estimator(self) -> PositionEstimator:
         return self.get_event_handler("position_estimator")
 
     @property
-    def map_observation(self):
+    def map_observation(self) -> MapObservation:
         return self.get_event_handler("map_observation")
 
     def render(self):
