@@ -141,7 +141,7 @@ class MapObservation(EventHandler):
             self.wall_map.add_value(self.pos_est.px + self.pos_est.dx, self.pos_est.py + self.pos_est.dy,
                                     self.WALL_VALUE)
 
-    def image(self):
+    def image(self, dtype=np.float32):
         visit_image = self.get_visit_map_image()
         wall_image = self.get_wall_map_image()
         dir_image = self.get_direction_image()
@@ -149,7 +149,7 @@ class MapObservation(EventHandler):
         visit_image = np.expand_dims(visit_image, axis=2)
         wall_image = np.expand_dims(wall_image, axis=2)
         dir_image = np.expand_dims(dir_image, axis=2)
-        return np.concatenate([dir_image, visit_image, wall_image], axis=2).astype(np.float32)
+        return np.concatenate([dir_image, visit_image, wall_image], axis=2).astype(dtype)
 
     def get_visit_map_image(self):
         x, y = int(self.pos_est.px), int(self.pos_est.py)

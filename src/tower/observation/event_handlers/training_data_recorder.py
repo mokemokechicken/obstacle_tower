@@ -4,6 +4,8 @@ from tower.config import Config
 from tower.lib.memory import Memory
 from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.observation.manager import ObservationManager
+from tower.spike.util import average_image
+import numpy as np
 
 
 class TrainingDataRecorder(EventHandler):
@@ -14,6 +16,8 @@ class TrainingDataRecorder(EventHandler):
         self.data = []
         self.step_info: dict = None
         self.last_obs = None
+
+        self.memory.setup()
 
     def reset(self):
         self.data = []
@@ -33,9 +37,12 @@ class TrainingDataRecorder(EventHandler):
         if self.last_obs is None:
             self.step_info = None
             return
+
+        obs = list(self.last_obs)
+        obs[0] = (self.observation.frame_history.last_half_frame * 255).astype(np.uint8)
         self.step_info = dict(
-            state=self.last_obs,
-            map=self.observation.map_observation.image(),
+            state=obs,
+            map=(self.observation.map_observation.image() * 255).astype(np.uint8),
         )
 
     def after_step(self, params: EventParamsAfterStep):
@@ -57,3 +64,4 @@ class TrainingDataRecorder(EventHandler):
             map_reward=sum([x["map_reward"] for x in self.data]),
         )
         return meta
+

@@ -6,6 +6,9 @@ from tower.config import Config
 
 
 class Memory:
+    def setup(self):
+        pass
+
     def store(self, data):
         pass
 
