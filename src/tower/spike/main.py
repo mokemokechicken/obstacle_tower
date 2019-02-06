@@ -5,7 +5,7 @@ from typing import List
 import cv2
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.actors.random_repeat_actor import RandomRepeatActor
+from tower.agents.random.random_repeat_actor import RandomRepeatActor
 from tower.const import Action
 from tower.event_handlers.base import EventParamsAfterStep, EventHandler
 from tower.event_handlers.frame import FrameHistory

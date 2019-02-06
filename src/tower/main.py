@@ -1,8 +1,8 @@
 import argparse
 from logging import getLogger
 
-from tower.agents.random_agent import RandomAgent
-from tower.command import play
+from tower.agents.random.agent import RandomAgent
+from tower.command import play, train
 from tower.config import load_config
 from tower.lib.logger import setup_logger
 
@@ -11,6 +11,7 @@ logger = getLogger(__name__)
 
 def create_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument('command', help="command to run", choices=["train", "play"])
     parser.add_argument('-c', help="config file path", dest="config")
     parser.add_argument('--ep', help="number of episode play", type=int)
     parser.add_argument('--render', help="render screen when playing", action="store_true")
@@ -36,4 +37,7 @@ def start():
     log_level = 'debug' if config.debug else 'info'
     setup_logger(config.resource.log_file_path, log_level)
 
-    play.start(config, RandomAgent)
+    if args.command == "play":
+        play.start(config, RandomAgent)
+    elif args.command == "train":
+        train.start(config)

@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from tower.actors.random_repeat_actor import RandomRepeatActor
+from tower.agents.random.random_repeat_actor import RandomRepeatActor
 from tower.agents.base import AgentBase
 from tower.const import Action
 from tower.lib.memory import FileMemory

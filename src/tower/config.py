@@ -30,6 +30,8 @@ class Config(ConfigBase):
         self.resource = ResourceConfig()
         self.play = PlayConfig()
         self.map = MapConfig()
+        self.train = TrainConfig()
+        self.model = ModelConfig()
 
 
 class ResourceConfig(ConfigBase):
@@ -38,6 +40,7 @@ class ResourceConfig(ConfigBase):
         self.log_file_path = _project_base_dir() / "log" / "tower.log"
         self.working_dir = _project_base_dir() / "tmp" / "working"
         self.memory_dir = _project_base_dir() / "data" / "memory"
+        self.model_dir = _project_base_dir() / "data" / "model"
 
 
 class PlayConfig(ConfigBase):
@@ -54,3 +57,36 @@ class MapConfig(ConfigBase):
         self.visit_map_value = 0.2
         self.wall_map_scale = 1.
         self.wall_map_value = 0.3
+
+
+class TrainConfig(ConfigBase):
+    def __init__(self):
+        self.new_model = False
+        self.vae = VAETrainConfig()
+
+
+class VAETrainConfig(ConfigBase):
+    def __init__(self):
+        self.kl_loss_rate = 0.1
+        self.lr = 0.01
+        self.lr_decay_factor = 0.1
+        self.lr_patience = 10
+        self.lr_min = 0.00001
+        self.batch_size = 512
+        self.epochs = 100
+
+
+class ModelConfig(ConfigBase):
+    def __init__(self):
+        self.frame_shape = (168//2, 168//2, 3)
+        self.max_key_num = 5
+        self.vae = VAEModelConfig()
+
+
+class VAEModelConfig(ConfigBase):
+    def __init__(self):
+        self.conv_layers = [
+            dict(filters=32, kernel_size=8, strides=4, activation="relu"),
+            dict(filters=32, kernel_size=3, strides=1, activation="relu"),
+        ]
+        self.latent_dim = 8
