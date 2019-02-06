@@ -53,7 +53,7 @@ class MapController:
         mx = x + self.offset_origin_x
         my = y + self.offset_origin_y
         self.map[my, mx] = float(np.clip(self.map[my, mx] + value, self.min_value, self.max_value))
-        logger.info(f"map {self.name or ''}({x},{y})={self.map[my, mx]}")
+        logger.debug(f"map {self.name or ''}({x},{y})={self.map[my, mx]}")
 
     def fetch_around(self, x: int, y: int) -> np.ndarray:
         x, y = int(x/self.scale), int(y/self.scale)

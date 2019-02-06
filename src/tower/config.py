@@ -26,6 +26,7 @@ def load_config(config_path=None):
 
 class Config(ConfigBase):
     def __init__(self):
+        self.debug = False
         self.resource = ResourceConfig()
         self.play = PlayConfig()
         self.map = MapConfig()

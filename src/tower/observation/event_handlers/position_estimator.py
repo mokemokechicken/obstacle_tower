@@ -61,7 +61,7 @@ class PositionEstimator(EventHandler):
         self.dx = dx
         self.dy = dy
 
-        logger.info(self.str_info())
+        logger.debug(self.str_info())
 
     def str_info(self):
         ret = f"pos=({self.px:.1f},{self.py:.1f},{self.pz:.1f}), d=({self.dx:.1f},{self.dy:.1f})"

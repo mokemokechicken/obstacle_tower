@@ -67,7 +67,7 @@ class MovingChecker(EventHandler):
                 is_nop_action = diff < 3
             if is_nop_action:
                 add_history = False
-                logger.info(f"action={action}, but did not move: diff={diff}")
+                logger.debug(f"action={action}, but did not move: diff={diff}")
 
         if is_nop_action:
             if add_history and self._last_jump_counter == 0:

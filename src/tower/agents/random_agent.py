@@ -15,7 +15,10 @@ class RandomAgent(AgentBase):
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
+        self.observation.setup()
         self.actor = self.create_random_actor()
+        if self.config.play.render:
+            self.observation.add_event_handler("info", InformationHandler(self.config, self.observation))
 
     @staticmethod
     def create_random_actor():
@@ -32,18 +35,16 @@ class RandomAgent(AgentBase):
         ])
         return random_actor
 
-    def play(self, episode=1):
-        if self.config.play.render:
-            self.observation.add_event_handler(InformationHandler(self.config, self.observation))
-
-        for ep in range(episode):
+    def play(self):
+        n_episode = self.config.play.n_episode
+        for ep in range(n_episode):
             self.observation.reset()
             self.observation.floor((ep % 20) + 1)
 
             self.observation.begin_episode(ep)
-            logger.info(f"start episode {ep}/{episode}")
+            logger.info(f"start episode {ep}/{n_episode}")
             self.play_episode()
-            logger.info(f"finish episode {ep}/{episode}")
+            logger.info(f"finish episode {ep}/{n_episode}")
             self.observation.end_episode(ep)
 
     def play_episode(self):

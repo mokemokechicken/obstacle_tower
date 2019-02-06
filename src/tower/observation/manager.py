@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from logging import getLogger
 
 from obstacle_tower_env import ObstacleTowerEnv
 
@@ -8,6 +9,8 @@ from tower.observation.event_handlers.frame import FrameHistory
 from tower.observation.event_handlers.map_observation import MapObservation
 from tower.observation.event_handlers.moving_checker import MovingChecker
 from tower.observation.event_handlers.position_estimator import PositionEstimator
+
+logger = getLogger(__name__)
 
 
 class ObservationManager:
@@ -70,7 +73,8 @@ class ObservationManager:
         return self._env.floor(floor)
 
     def begin_episode(self, ep: int):
-        for h in self._event_handlers.values():
+        for name, h in self._event_handlers.items():
+            logger.debug(f"begin_episode: call {name}")
             h.begin_episode(ep)
 
     def begin_loop(self):
