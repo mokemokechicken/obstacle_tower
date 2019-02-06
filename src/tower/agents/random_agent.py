@@ -44,8 +44,8 @@ class RandomAgent(AgentBase):
     def play(self):
         n_episode = self.config.play.n_episode
         for ep in range(n_episode):
-            self.observation.reset()
             self.observation.floor((ep % 20) + 1)
+            self.observation.reset()
 
             self.observation.begin_episode(ep)
             logger.info(f"start episode {ep}/{n_episode}")

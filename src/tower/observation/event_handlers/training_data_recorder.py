@@ -1,4 +1,5 @@
 import time
+from logging import getLogger
 
 import numpy as np
 
@@ -6,6 +7,8 @@ from tower.config import Config
 from tower.lib.memory import Memory
 from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.observation.manager import ObservationManager
+
+logger = getLogger(__name__)
 
 
 class TrainingDataRecorder(EventHandler):
@@ -51,7 +54,7 @@ class TrainingDataRecorder(EventHandler):
             return
 
         self.step_info['action'] = params.action
-        self.step_info['reward'] = params.reward
+        self.step_info['reward'] = float(params.reward)
         self.step_info['done'] = params.done
         self.step_info['map_reward'] = 1 - self.observation.map_observation.last_visit_value
         self.data.append(self.step_info)
@@ -63,5 +66,6 @@ class TrainingDataRecorder(EventHandler):
             reward=sum([x["reward"] for x in self.data]),
             map_reward=sum([x["map_reward"] for x in self.data]),
         )
+        logger.info(str(meta))
         return meta
 

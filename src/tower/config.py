@@ -50,7 +50,7 @@ class PlayConfig(ConfigBase):
 class MapConfig(ConfigBase):
     def __init__(self):
         self.map_size = 64
-        self.visit_map_scale = 2.
-        self.visit_map_value = 0.1
+        self.visit_map_scale = 5.
+        self.visit_map_value = 0.2
         self.wall_map_scale = 1.
         self.wall_map_value = 0.3
