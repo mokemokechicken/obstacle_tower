@@ -2,14 +2,16 @@ import math
 from logging import getLogger
 
 from tower.const import ROTATION_CYCLE, Action
-from tower.observation.base import EventHandler, EventParamsAfterStep
-from tower.observation.moving_checker import MovingChecker
+from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
+from tower.observation.event_handlers.moving_checker import MovingChecker
 
 logger = getLogger(__name__)
 
 
 class PositionEstimator(EventHandler):
-    def __init__(self, judger: MovingChecker):
+    def __init__(self, moving_checker: MovingChecker):
+        self.moving_checker = moving_checker
+        # oh, don't DRY
         self.px = 0
         self.py = 0
         self.pz = 0
@@ -17,7 +19,16 @@ class PositionEstimator(EventHandler):
         self.dy = 0
         self.direction = 15  # 0~19: 0 is direction=(1, 0, 0), 5 is direction=(0, 1, 0), 15 is (0, -1, 0)
         self.d_size = 1.  # 1行動毎の論理的な移動幅
-        self.judger = judger
+        self.last_action = None
+
+    def reset(self):
+        self.px = 0
+        self.py = 0
+        self.pz = 0
+        self.dx = 0
+        self.dy = 0
+        self.direction = 15  # 0~19: 0 is direction=(1, 0, 0), 5 is direction=(0, 1, 0), 15 is (0, -1, 0)
+        self.d_size = 1.  # 1行動毎の論理的な移動幅
         self.last_action = None
 
     def after_step(self, params: EventParamsAfterStep):
@@ -29,7 +40,7 @@ class PositionEstimator(EventHandler):
         rad = (self.direction * 18) * math.pi / 180
         dx = dy = 0
 
-        if self.judger.did_move:
+        if self.moving_checker.did_move:
             if action[Action.IDX_MOVE_FB] > 0:
                 fb = 1 if action[Action.IDX_MOVE_FB] == 1 else -1
                 dx += math.cos(rad) * fb

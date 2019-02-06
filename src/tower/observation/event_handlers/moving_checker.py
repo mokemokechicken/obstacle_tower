@@ -4,8 +4,8 @@ import numpy as np
 from scipy import stats
 
 from tower.const import Action
-from tower.observation.base import EventHandler, EventParamsAfterStep
-from tower.observation.frame import FrameHistory
+from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
+from tower.observation.event_handlers.frame import FrameHistory
 from tower.spike.util import frame_abs_diff
 
 logger = getLogger(__name__)
@@ -14,6 +14,16 @@ logger = getLogger(__name__)
 class MovingChecker(EventHandler):
     def __init__(self, frame_history: FrameHistory):
         self.frame_history = frame_history
+        # Oh, don't DRY...
+        self._nop_diffs = []
+        self._other_diffs = []
+        self._step = 0
+        self._nop_dist = None
+        self._other_dist = None
+        self._last_jump_counter = 0
+        self._did_move = True
+
+    def reset(self):
         self._nop_diffs = []
         self._other_diffs = []
         self._step = 0

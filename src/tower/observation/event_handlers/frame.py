@@ -1,12 +1,20 @@
 from obstacle_tower_env import ObstacleTowerEnv
 
-from tower.observation.base import EventHandler, EventParamsAfterStep
+from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.spike.util import average_image, frame_pixel_diff
 
 
 class FrameHistory(EventHandler):
     def __init__(self, env: ObstacleTowerEnv):
         self.env = env
+        # not DRY...
+        self.last_frame = None
+        self.last_small_frame = None
+        self.current_frame = None
+        self.current_small_frame = None
+        self.small_frame_pixel_diffs = []
+
+    def reset(self):
         self.last_frame = None
         self.last_small_frame = None
         self.current_frame = None

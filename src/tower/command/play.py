@@ -5,6 +5,7 @@ import numpy as np
 from obstacle_tower_env import ObstacleTowerEnv
 
 from tower.actors.random_repeat_actor import RandomRepeatActor
+from tower.agents.base import AgentBase
 from tower.config import Config
 from tower.const import Action
 from tower.lib.screen import Screen
@@ -13,8 +14,8 @@ from tower.observation.manager import ObservationManager
 logger = getLogger(__name__)
 
 
-def start(config: Config):
-    PlayCommand(config).start()
+def start(config: Config, agent_cls):
+    PlayCommand(config).start(agent_cls)
 
 
 class PlayCommand:
@@ -22,7 +23,12 @@ class PlayCommand:
         self.config = config
         self.screen: Screen = None
 
-    def start(self):
+    def start(self, agent_cls):
+        env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=9)
+        agent: AgentBase = agent_cls(self.config, env)
+        agent.play()
+
+    def _start(self):
         env = ObstacleTowerEnv(str(self.config.resource.obstacle_tower_path), retro=False, worker_id=9)
         self.screen = Screen(render=self.config.play.render)
 
@@ -47,7 +53,7 @@ class PlayCommand:
             self.show_information(observation)
 
             action = random_actor.decide_action(observation.moving_checker.did_move)
-            obs, reward, done, info = env.step(action)
+            obs, reward, done, info = observation.step(action)
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
             observation.end_loop()

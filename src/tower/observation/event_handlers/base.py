@@ -4,6 +4,9 @@ EventParamsAfterStep = namedtuple('EventParamsAfterStep', 'action obs reward don
 
 
 class EventHandler:
+    def reset(self):
+        pass
+
     def begin_loop(self):
         pass
 

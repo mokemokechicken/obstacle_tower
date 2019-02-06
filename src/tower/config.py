@@ -28,6 +28,7 @@ class Config(ConfigBase):
     def __init__(self):
         self.resource = ResourceConfig()
         self.play = PlayConfig()
+        self.map = MapConfig()
 
 
 class ResourceConfig(ConfigBase):
@@ -41,3 +42,13 @@ class PlayConfig(ConfigBase):
     def __init__(self):
         self.render = False
         self.wait_per_frame = 1
+        self.n_episode = 1
+
+
+class MapConfig(ConfigBase):
+    def __init__(self):
+        self.map_size = 64
+        self.visit_map_scale = 2.
+        self.visit_map_value = 0.1
+        self.wall_map_scale = 1.
+        self.wall_map_value = 0.3
