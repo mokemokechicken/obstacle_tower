@@ -27,11 +27,11 @@ class TrainingDataRecorder(EventHandler):
         self.reset()
 
     def end_episode(self, ep: int):
-        data = {
+        episode_data = {
             "meta": self.create_meta_info(),
             "steps": self.data,
         }
-        self.memory.store(data)
+        self.memory.store(episode_data)
 
     def before_step(self):
         if self.last_obs is None:

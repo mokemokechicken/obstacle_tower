@@ -41,6 +41,6 @@ class FileMemory(Memory):
         for episode_name in episode_list:
             path = self.base_dir / episode_name
             with gzip.open(path, mode="rb") as f:
-                data = pickle.load(f)
-                ret.append(data)
+                episode_data = pickle.load(f)
+                ret.append(episode_data)  # format -> see TrainingDataRecorder#end_episode()
         return ret
