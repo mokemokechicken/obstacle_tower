@@ -10,10 +10,10 @@ jupyter = "*"
 tensorflow = "*"
 gym = "*"
 pillow = "*"
-ml-agents = {git = "https://github.com/Unity-Technologies/ml-agents.git",subdirectory = "ml-agents"}
 obstacle-tower-env = {editable = true,path = "./obstacle-tower-env"}
 opencv-python = "*"
 moke-config = "*"
+mlagents = {editable = true,path = "./ml-agents/ml-agents"}
 
 [requires]
 python_version = "3.6"

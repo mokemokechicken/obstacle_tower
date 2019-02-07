@@ -2,6 +2,7 @@ from logging import getLogger
 
 from tower.agents.random.random_repeat_actor import RandomRepeatActor
 from tower.agents.base import AgentBase
+from tower.agents.version1.state_model import StateModel
 from tower.const import Action
 from tower.lib.memory import FileMemory
 from tower.observation.event_handlers.infomation import InformationHandler
@@ -14,11 +15,15 @@ logger = getLogger(__name__)
 class RandomAgent(AgentBase):
     observation: ObservationManager
     actor: RandomRepeatActor
+    state_model: StateModel
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
         self.observation.setup()
         self.actor = self.create_random_actor()
+
+        self.state_model = StateModel(self.config)
+        self.state_model.load_model()
 
         if self.config.play.render:
             self.observation.add_event_handler("info", InformationHandler(self.config, self.observation))
