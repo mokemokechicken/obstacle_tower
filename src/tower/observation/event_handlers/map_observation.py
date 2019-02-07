@@ -133,6 +133,10 @@ class MapObservation(EventHandler):
         self.dir_map = DirectionMap(size=self.size)
         self.last_visit_value = 0
 
+    @property
+    def map_reward(self):
+        return 1 - self.last_visit_value
+
     def after_step(self, params: EventParamsAfterStep):
         self.last_visit_value = self.visit_map.add_value(self.pos_est.px, self.pos_est.py, self.VISIT_VALUE)
 

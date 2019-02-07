@@ -64,8 +64,8 @@ class TrainConfig(ConfigBase):
         self.new_model = False
         self.vae = VAETrainConfig()
         self.importance_step = 10
-        self.map_reward_weight = 0.001
-        self.max_episode_in_one_time = 100
+        self.map_reward_weight = 0.0001
+        self.max_episode_in_one_time = 1
 
 
 class VAETrainConfig(ConfigBase):
@@ -78,6 +78,7 @@ class VAETrainConfig(ConfigBase):
         self.lr_min = 0.00001
         self.batch_size = 512
         self.epochs = 100
+
 
 class ModelConfig(ConfigBase):
     def __init__(self):

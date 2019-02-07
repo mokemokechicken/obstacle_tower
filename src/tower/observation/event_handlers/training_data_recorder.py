@@ -57,7 +57,7 @@ class TrainingDataRecorder(EventHandler):
         self.step_info['action'] = Action.to_int(params.action)
         self.step_info['reward'] = float(params.reward)
         self.step_info['done'] = params.done
-        self.step_info['map_reward'] = 1 - self.observation.map_observation.last_visit_value
+        self.step_info['map_reward'] = self.observation.map_observation.map_reward
         self.data.append(self.step_info)
 
     def create_meta_info(self):

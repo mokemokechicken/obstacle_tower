@@ -1,7 +1,6 @@
 import math
 from collections import namedtuple
 from logging import getLogger
-from typing import Set, List
 
 from h5py.h5t import defaultdict
 

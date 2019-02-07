@@ -27,6 +27,4 @@ class StateModel:
         self.model.compile()
 
     def fit(self, frame: np.ndarray, next_frame: np.ndarray, action: np.ndarray):
-        pass
-
-
+        self.model.training_model.fit([frame, action], [frame, next_frame], epochs=1)
