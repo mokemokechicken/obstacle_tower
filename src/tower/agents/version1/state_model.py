@@ -23,14 +23,14 @@ class StateModel:
     def load_model(self):
         self.build()
         logger.info(f"loading state model")
-        self.model.encoder.load_weights(self.encoder_file_path)
-        self.model.decoder.load_weights(self.decoder_file_path)
+        self.model.encoder.load_weights(str(self.encoder_file_path))
+        self.model.decoder.load_weights(str(self.decoder_file_path))
 
     def save_model(self):
         logger.info(f"saving state model")
         self.encoder_file_path.parent.mkdir(parents=True, exist_ok=True)
-        self.model.encoder.save_weights(self.encoder_file_path)
-        self.model.decoder.save_weights(self.decoder_file_path)
+        self.model.encoder.save_weights(str(self.encoder_file_path))
+        self.model.decoder.save_weights(str(self.decoder_file_path))
 
     def build(self):
         logger.info(f"setup state model")

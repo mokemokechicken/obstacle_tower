@@ -46,7 +46,7 @@ class VAEModel:
         h_decoded = Reshape(encoder_last_shape)(h_decoded)
         for i, conv in enumerate(reversed(vc.conv_layers)):
             h_decoded = Conv2DTranspose(name=f"VAE/decoder_conv2D_{i + 1}", **conv)(h_decoded)
-        h_decoded = Conv2D(filters=3, kernel_size=1, strides=1, activation="linear")(h_decoded)
+        h_decoded = Conv2D(filters=3, kernel_size=1, strides=1, activation="sigmoid")(h_decoded)
         assert feature_shape == K.int_shape(h_decoded)[1:], f"{feature_shape} != {K.int_shape(h_decoded)[1:]}"
         x_decoded_mean = h_decoded
 
@@ -72,18 +72,18 @@ class VAEModel:
         epsilon = K.random_normal(shape=(batch, dim), mean=0., stddev=1.)
         return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
-    def vae_loss(self, trues, x_decoded_mean):
+    def vae_loss(self, targets, x_decoded_mean):
         z_mean, z_log_var, next_z_mean, next_z_log_var = self.z_mean, self.z_log_var, self.next_z_mean, self.next_z_log_var
-        current_frame, next_frame = trues[:, :, :, 0:3], trues[:, :, :, 3:6]
+        current_frame, next_frame = targets[:, :, :, 0:3], targets[:, :, :, 3:6]
 
         # 次フレーム
         next_z_mean_of_current, next_z_log_var_of_current = self.encoder(next_frame)
-        # next_state_loss = K.sum(K.square(next_z_mean_of_current - next_z_mean), axis=-1)
+        next_state_loss = K.sum(K.square(next_z_mean_of_current - next_z_mean), axis=-1)
         # KLD(next || current)
-        next_state_loss = 0.5 * K.sum(next_z_log_var_of_current - next_z_log_var - 1 +
-                                      (K.exp(next_z_log_var) +
-                                       K.square(next_z_mean - next_z_log_var_of_current)) / K.exp(next_z_log_var_of_current)
-                                      , axis=-1)
+        # next_state_loss = 0.5 * K.sum(next_z_log_var_of_current - next_z_log_var - 1 +
+        #                               (K.exp(next_z_log_var) +
+        #                                K.square(next_z_mean - next_z_log_var_of_current)) / K.exp(next_z_log_var_of_current)
+        #                               , axis=-1)
 
         # 1項目の計算
         latent_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
@@ -91,12 +91,13 @@ class VAEModel:
         reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
 
         total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
-        total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
+        # total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
         return K.mean(total_loss)
 
     @staticmethod
     def reconstruct_loss(y_true, y_pred):
-        return K.sum(K.square(y_pred - y_true), axis=[1, 2, 3])
+        x = K.mean(K.square(y_pred - y_true), axis=[3])
+        return K.sum(x, axis=[1, 2])
 
     def freeze(self):
         for l in self.training_model.layers:

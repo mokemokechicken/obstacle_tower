@@ -1,9 +1,8 @@
 import math
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from logging import getLogger
 
-from h5py.h5t import defaultdict
-from tensorflow.python.keras._impl.keras.callbacks import ReduceLROnPlateau
+from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 
 from tower.agents.version1.state_model import StateModel
 from tower.const import Action
@@ -63,8 +62,7 @@ class Trainer(TrainerBase):
                 episode_list = all_episode_list[bi*ep_batch_size:(bi+1)*ep_batch_size]
                 training_data = self.make_training_data(episode_list)
                 data_size = len(training_data.frame)
-
-                for _ in range(data_size // vc.batch_size):
+                for ci in range(data_size // vc.batch_size):
                     idx_list = np.random.choice(range(data_size), p=training_data.importance, size=vc.batch_size)
                     frame = training_data.frame[idx_list]
                     next_frame = training_data.next_frame[idx_list]
@@ -76,7 +74,7 @@ class Trainer(TrainerBase):
                 del training_data
 
     def make_training_data(self, episode_list):
-        logger.info(f"preparing training data")
+        # logger.info(f"preparing training data")
         tc = self.config.train
 
         episodes = self.memory.load_episodes(episode_list)
@@ -100,5 +98,5 @@ class Trainer(TrainerBase):
 
         importance = (importance - np.mean(importance)) / np.std(importance)
         importance = np.exp(importance) / np.sum(np.exp(importance))
-        logger.info(f"loaded {len(frame)} frames")
+        # logger.info(f"loaded {len(frame)} frames")
         return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance)

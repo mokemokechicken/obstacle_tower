@@ -65,21 +65,21 @@ class TrainConfig(ConfigBase):
         self.vae = VAETrainConfig()
         self.importance_step = 10
         self.map_reward_weight = 0.0001
-        self.max_episode_in_one_time = 10
+        self.max_episode_in_one_time = 100
 
 
 class VAETrainConfig(ConfigBase):
     def __init__(self):
         self.kl_loss_rate = 0.1
         self.next_state_loss_weight = 0.1
-        self.lr = 0.0001
+        self.lr = 0.00001
         self.lr_decay_factor = 0.1
         self.lr_patience = 10
-        self.lr_min = 0.000001
+        self.lr_min = 0.0000001
 
-        self.epochs = 50
+        self.epochs = 200
         self.steps_per_epoch = 100
-        self.batch_size = 16
+        self.batch_size = 32
 
 
 class ModelConfig(ConfigBase):
@@ -93,7 +93,7 @@ class VAEModelConfig(ConfigBase):
     def __init__(self):
         self.conv_layers = [
             dict(filters=32, kernel_size=4, strides=2, activation="relu"),
-            dict(filters=32, kernel_size=3, strides=1, activation="relu"),
+            dict(filters=32, kernel_size=3, strides=2, activation="relu"),
         ]
         self.latent_dim = 8
         self.action_size = 54
