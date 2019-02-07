@@ -22,13 +22,15 @@ class VAEModel:
         self.training_model = None  # type: Model
         self.next_z_mean = None
         self.next_z_log_var = None
+        self.frame_in = None
+        self.action_in = None
 
     def build(self, feature_shape):
         vc = self.config.model.vae
 
         # Encoder
-        frame_in = Input(feature_shape, name="VAE/x_input")
-        hidden = frame_in
+        self.frame_in = Input(feature_shape, name="VAE/x_input")
+        hidden = self.frame_in
         for i, conv in enumerate(vc.conv_layers):
             logger.info(f"conv2d param: {conv}")
             hidden = Conv2D(name=f"VAE/encoder_conv2D_{i + 1}", **conv)(hidden)
@@ -49,15 +51,15 @@ class VAEModel:
         x_decoded_mean = h_decoded
 
         # next_latent_z
-        action_in = Input((vc.action_size,))
-        encoder_and_action = Concatenate()([encoder_last_layer, action_in])
+        self.action_in = Input((vc.action_size,))
+        encoder_and_action = Concatenate()([encoder_last_layer, self.action_in])
         self.next_z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_mean")(encoder_and_action)
         self.next_z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_log_var")(
             encoder_and_action)
 
-        self.encoder = Model(frame_in, [self.z_mean, self.z_log_var], name="VAE/encoder")
+        self.encoder = Model(self.frame_in, [self.z_mean, self.z_log_var], name="VAE/encoder")
         self.decoder = Model(z_placeholder, x_decoded_mean, name="VAE/decoder")
-        self.training_model = Model([frame_in, action_in], self.decoder(z), name="VAE/training")
+        self.training_model = Model([self.frame_in, self.action_in], self.decoder(z), name="VAE/training")
 
     def compile(self):
         self.training_model.compile(optimizer=Adam(lr=self.config.train.vae.lr), loss=self.vae_loss)

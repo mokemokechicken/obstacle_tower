@@ -18,12 +18,22 @@ class StateModel:
         self.model: VAEModel = None
 
     def can_load(self):
-        return False
+        return self.encoder_file_path.exists() and self.decoder_file_path.exists()
 
     def load_model(self):
-        raise NotImplemented()
+        self.build()
+        logger.info(f"loading state model")
+        self.model.encoder.load_weights(self.encoder_file_path)
+        self.model.decoder.load_weights(self.decoder_file_path)
+
+    def save_model(self):
+        logger.info(f"saving state model")
+        self.encoder_file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.model.encoder.save_weights(self.encoder_file_path)
+        self.model.decoder.save_weights(self.decoder_file_path)
 
     def build(self):
+        logger.info(f"setup state model")
         mc = self.config.model
         self.model = VAEModel(self.config)
         self.model.build(mc.frame_shape)
@@ -31,8 +41,12 @@ class StateModel:
     def compile(self):
         self.model.compile()
 
-    def fit(self, frame: np.ndarray, next_frame: np.ndarray, action: np.ndarray):
-        logger.info(f"fit data shape: frame={frame.shape}, next_frame={next_frame.shape}, action={action.shape}")
+    @property
+    def encoder_file_path(self):
+        return self.config.resource.model_dir / "state_encoder_weights.hf5"
 
-        trues = np.concatenate([frame, next_frame], axis=-1)
-        self.model.training_model.fit([frame, action], trues, epochs=1)
+    @property
+    def decoder_file_path(self):
+        return self.config.resource.model_dir / "state_decoder_weights.hf5"
+
+
