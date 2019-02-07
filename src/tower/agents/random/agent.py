@@ -5,6 +5,9 @@ from tower.agents.base import AgentBase
 from tower.agents.version1.state_model import StateModel
 from tower.const import Action
 from tower.lib.memory import FileMemory
+from tower.lib.screen import Screen
+from tower.observation.event_handlers.base import EventHandler
+from tower.observation.event_handlers.frame import FrameHistory
 from tower.observation.event_handlers.infomation import InformationHandler
 from tower.observation.event_handlers.training_data_recorder import TrainingDataRecorder
 from tower.observation.manager import ObservationManager
@@ -26,7 +29,10 @@ class RandomAgent(AgentBase):
         self.state_model.load_model()
 
         if self.config.play.render:
-            self.observation.add_event_handler("info", InformationHandler(self.config, self.observation))
+            info = InformationHandler(self.config, self.observation)
+            self.observation.add_event_handler("info", info)
+            state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info)
+            self.observation.add_event_handler("state_monitor", state_monitor)
 
         recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
         self.observation.add_event_handler("recorder", recorder)
@@ -69,3 +75,14 @@ class RandomAgent(AgentBase):
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
 
             self.observation.end_loop()
+
+
+class StateMonitor(EventHandler):
+    def __init__(self, state_model: StateModel, frame_history: FrameHistory, info: InformationHandler):
+        self.state_model = state_model
+        self.frame_history = frame_history
+        self.info = info
+
+    def before_step(self):
+        frame = self.state_model.reconstruct_from_frame(self.frame_history.last_half_frame)
+        self.info.screen.show("reconstruct", frame)

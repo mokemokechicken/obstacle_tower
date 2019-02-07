@@ -38,6 +38,15 @@ class StateModel:
         self.model = VAEModel(self.config)
         self.model.build(mc.frame_shape)
 
+    def encode_to_state(self, half_frame):
+        z_means, _ = self.model.encoder.predict(np.expand_dims(half_frame, axis=0))
+        return z_means[0]
+
+    def reconstruct_from_frame(self, half_frame):
+        z_mean = self.encode_to_state(half_frame)
+        frames = self.model.decoder.predict(np.expand_dims(z_mean, axis=0))
+        return frames[0]
+
     def compile(self):
         self.model.compile()
 
