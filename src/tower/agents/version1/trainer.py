@@ -45,7 +45,7 @@ class Trainer(TrainerBase):
             episode_list = all_episode_list[bi*ep_batch_size:(bi+1)*ep_batch_size]
             training_data = self.make_training_data(episode_list)
             data_size = len(training_data.frame)
-            idx_list = np.random.choice(range(data_size), p=training_data.importance, size=data_size * 10)
+            idx_list = np.random.choice(range(data_size), p=training_data.importance, size=data_size)
             state_model.fit(training_data.frame[idx_list], training_data.next_frame[idx_list],
                             training_data.action[idx_list])
 

@@ -65,17 +65,17 @@ class TrainConfig(ConfigBase):
         self.vae = VAETrainConfig()
         self.importance_step = 10
         self.map_reward_weight = 0.0001
-        self.max_episode_in_one_time = 1
+        self.max_episode_in_one_time = 10
 
 
 class VAETrainConfig(ConfigBase):
     def __init__(self):
         self.kl_loss_rate = 0.1
         self.next_state_loss_weight = 0.1
-        self.lr = 0.01
+        self.lr = 0.0001
         self.lr_decay_factor = 0.1
         self.lr_patience = 10
-        self.lr_min = 0.00001
+        self.lr_min = 0.000001
         self.batch_size = 512
         self.epochs = 100
 
