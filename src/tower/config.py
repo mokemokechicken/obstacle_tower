@@ -77,8 +77,8 @@ class VAETrainConfig(ConfigBase):
         self.lr_patience = 10
         self.lr_min = 0.000001
 
-        self.epochs = 1
-        self.steps_per_epoch = 10
+        self.epochs = 50
+        self.steps_per_epoch = 100
         self.batch_size = 16
 
 

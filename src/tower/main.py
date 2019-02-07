@@ -17,6 +17,7 @@ def create_parser():
     parser.add_argument('--render', help="render screen when playing", action="store_true")
     parser.add_argument('--wait', type=int, help="wait milli seconds per frame (0 is forever)")
     parser.add_argument('--debug', action="store_true")
+    parser.add_argument('--new-model', action="store_true", help="create new state model")
     return parser
 
 
@@ -33,6 +34,8 @@ def start():
         config.play.wait_per_frame = args.wait
     if args.debug:
         config.debug = True
+    if args.new_model:
+        config.train.new_model = True
 
     log_level = 'debug' if config.debug else 'info'
     setup_logger(config.resource.log_file_path, log_level)
