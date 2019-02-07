@@ -5,7 +5,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from tensorflow.python.keras.layers import Dense, Lambda, Reshape, Conv2D, Conv2DTranspose, Flatten, Concatenate, Input
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.optimizers import Adam
+from tensorflow.python.keras.optimizers import Adam, SGD
 
 from tower.config import Config
 
@@ -62,7 +62,9 @@ class VAEModel:
         self.training_model = Model([self.frame_in, self.action_in], self.decoder(z), name="VAE/training")
 
     def compile(self):
-        self.training_model.compile(optimizer=Adam(lr=self.config.train.vae.lr), loss=self.vae_loss)
+        # optimizer = Adam(lr=self.config.train.vae.lr)
+        optimizer = SGD(lr=self.config.train.vae.lr, momentum=0.9)
+        self.training_model.compile(optimizer=optimizer, loss=self.vae_loss)
 
     @staticmethod
     def sampling(args):
@@ -78,12 +80,12 @@ class VAEModel:
 
         # 次フレーム
         next_z_mean_of_current, next_z_log_var_of_current = self.encoder(next_frame)
-        next_state_loss = K.sum(K.square(next_z_mean_of_current - next_z_mean), axis=-1)
+        # next_state_loss = K.sum(K.square(next_z_mean_of_current - next_z_mean), axis=-1)
         # KLD(next || current)
-        # next_state_loss = 0.5 * K.sum(next_z_log_var_of_current - next_z_log_var - 1 +
-        #                               (K.exp(next_z_log_var) +
-        #                                K.square(next_z_mean - next_z_log_var_of_current)) / K.exp(next_z_log_var_of_current)
-        #                               , axis=-1)
+        next_state_loss = -0.5 * K.sum(1 + next_z_log_var - next_z_log_var_of_current -
+                                       (K.exp(next_z_log_var) +
+                                        K.square(next_z_mean - next_z_log_var_of_current)) / K.exp(next_z_log_var_of_current)
+                                       , axis=-1)
 
         # 1項目の計算
         latent_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
@@ -91,7 +93,7 @@ class VAEModel:
         reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
 
         total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
-        # total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
+        total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
         return K.mean(total_loss)
 
     @staticmethod

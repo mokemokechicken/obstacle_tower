@@ -56,11 +56,14 @@ class Trainer(TrainerBase):
         logger.info(f"{ep_size} episodes found")
         vc = self.config.train.vae
 
+        training_data = None
+
         while True:
             np.random.shuffle(all_episode_list)
             for bi in range(batch_num):
                 episode_list = all_episode_list[bi*ep_batch_size:(bi+1)*ep_batch_size]
-                training_data = self.make_training_data(episode_list)
+                if training_data is None:
+                    training_data = self.make_training_data(episode_list)
                 data_size = len(training_data.frame)
                 for ci in range(data_size // vc.batch_size):
                     idx_list = np.random.choice(range(data_size), p=training_data.importance, size=vc.batch_size)
@@ -71,7 +74,9 @@ class Trainer(TrainerBase):
                     targets = np.concatenate([frame, next_frame], axis=-1)
                     yield ([frame, action], targets)
 
-                del training_data
+                if batch_num > 1:
+                    del training_data
+                    training_data = None
 
     def make_training_data(self, episode_list):
         # logger.info(f"preparing training data")
