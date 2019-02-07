@@ -10,6 +10,7 @@ from tensorflow.python import keras
 class StateModel:
     def __init__(self, config: Config):
         self.config = config
+        self.model: VAEModel = None
 
     def can_load(self):
         return False
@@ -19,5 +20,13 @@ class StateModel:
 
     def build(self):
         mc = self.config.model
-        vae_model = VAEModel(self.config)
-        vae_model.build(mc.frame_shape)
+        self.model = VAEModel(self.config)
+        self.model.build(mc.frame_shape)
+
+    def compile(self):
+        self.model.compile()
+
+    def fit(self, frame: np.ndarray, next_frame: np.ndarray, action: np.ndarray):
+        pass
+
+

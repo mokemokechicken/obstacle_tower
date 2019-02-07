@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from tower.agents.version1.state_model import StateModel
+from tower.agents.version1.trainer import Trainer
 from tower.config import Config
 
 logger = getLogger(__name__)
@@ -15,5 +15,5 @@ class TrainCommand:
         self.config = config
 
     def start(self):
-        state_model = StateModel(self.config)
-        state_model.build()
+        trainer = Trainer(self.config)
+        trainer.train()
