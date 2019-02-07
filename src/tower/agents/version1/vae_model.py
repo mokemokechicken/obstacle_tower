@@ -21,6 +21,7 @@ class VAEModel:
         self.z_log_var = None
         self.training_model = None  # type: Model
         self.next_z_mean = None
+        self.next_z_log_var = None
 
     def build(self, feature_shape):
         vc = self.config.model.vae
@@ -33,7 +34,7 @@ class VAEModel:
         encoder_last_shape = tuple(x for x in K.int_shape(hidden) if x is not None)
         encoder_last_layer = hidden = Flatten()(hidden)
         self.z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/latent_mean")(hidden)
-        self.z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/latent_var")(hidden)
+        self.z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/latent_log_var")(hidden)
         z = Lambda(self.sampling, output_shape=(vc.latent_dim,), name="VAE/sampling")([self.z_mean, self.z_log_var])
 
         # Decoder
@@ -50,8 +51,11 @@ class VAEModel:
         action_in = Input((vc.action_size,))
         encoder_and_action = Concatenate()([encoder_last_layer, action_in])
         self.next_z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_mean")(encoder_and_action)
+        self.next_z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_log_var")(
+            encoder_and_action)
 
-        self.encoder = Model(frame_in, self.z_mean, name="VAE/encoder")
+        z_sigma = K.exp(0.5 * self.z_log_var)
+        self.encoder = Model(frame_in, [self.z_mean, z_sigma], name="VAE/encoder")
         self.decoder = Model(z_placeholder, x_decoded_mean, name="VAE/decoder")
         self.training_model = Model([frame_in, action_in], self.decoder(z), name="VAE/training")
 
@@ -67,18 +71,26 @@ class VAEModel:
         return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
     def vae_loss(self, trues, x_decoded_mean):
-        z_mean, z_log_var, next_z_mean = self.z_mean, self.z_log_var, self.next_z_mean
+        z_mean, z_log_var, next_z_mean, next_z_log_var = self.z_mean, self.z_log_var, self.next_z_mean, self.next_z_log_var
         current_frame, next_frame = trues
 
         # 次フレーム
-        next_state_loss = K.sum(K.square(self.encoder(next_frame) - next_z_mean), axis=-1)
+        next_z_mean_of_current, next_z_log_var_of_current = self.encoder(next_frame)
+        # next_state_loss = K.sum(K.square(next_z_mean_of_current - next_z_mean), axis=-1)
+        # KLD(next || current)
+        next_state_loss = 0.5 * K.sum(next_z_log_var_of_current - next_z_log_var - 1 +
+                                      (K.exp(next_z_log_var) +
+                                       K.square(next_z_mean - next_z_log_var_of_current)) / K.exp(next_z_log_var_of_current)
+                                      , axis=-1)
 
         # 1項目の計算
         latent_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
         # 2項目の計算
         reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
-        return K.mean(latent_loss * self.config.train.vae.kl_loss_rate + reconstruct_loss +
-                      next_state_loss * self.config.train.vae.next_state_loss_weight)
+
+        total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
+        total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
+        return K.mean(total_loss)
 
     @staticmethod
     def reconstruct_loss(y_true, y_pred):
