@@ -17,14 +17,15 @@ class StateModel:
         self.config = config
         self.model: VAEModel = None
 
-    def can_load(self):
-        return self.encoder_file_path.exists() and self.decoder_file_path.exists()
-
     def load_model(self):
         self.build()
-        logger.info(f"loading state model")
-        self.model.encoder.load_weights(str(self.encoder_file_path))
-        self.model.decoder.load_weights(str(self.decoder_file_path))
+        try:
+            self.model.encoder.load_weights(str(self.encoder_file_path))
+            self.model.decoder.load_weights(str(self.decoder_file_path))
+            logger.info(f"loading state model success")
+            return True
+        except Exception:
+            return False
 
     def save_model(self):
         logger.info(f"saving state model")

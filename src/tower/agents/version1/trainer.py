@@ -29,7 +29,7 @@ class Trainer(TrainerBase):
     def train(self):
         state_model = StateModel(self.config)
 
-        if self.config.train.new_model or not state_model.can_load():
+        if self.config.train.new_model:
             state_model.build()
         else:
             state_model.load_model()

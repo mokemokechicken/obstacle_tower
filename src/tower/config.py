@@ -74,11 +74,11 @@ class VAETrainConfig(ConfigBase):
         self.next_state_loss_weight = 1.
         self.lr = 0.00001
         self.lr_decay_factor = 0.1
-        self.lr_patience = 10
+        self.lr_patience = 5
         self.lr_min = self.lr * 0.001
 
-        self.epochs = 200
-        self.steps_per_epoch = 100
+        self.epochs = 100
+        self.steps_per_epoch = 1000
         self.batch_size = 32
 
 
@@ -92,8 +92,9 @@ class ModelConfig(ConfigBase):
 class VAEModelConfig(ConfigBase):
     def __init__(self):
         self.conv_layers = [
-            dict(filters=32, kernel_size=4, strides=2, activation="relu"),
-            dict(filters=32, kernel_size=3, strides=2, activation="relu"),
+            dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
+            dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
+            dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
         ]
         self.latent_dim = 8
         self.action_size = 54

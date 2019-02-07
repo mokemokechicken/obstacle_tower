@@ -35,6 +35,7 @@ class VAEModel:
             logger.info(f"conv2d param: {conv}")
             hidden = Conv2D(name=f"VAE/encoder_conv2D_{i + 1}", **conv)(hidden)
         encoder_last_shape = tuple(x for x in K.int_shape(hidden) if x is not None)
+        logger.info(f"encoder_last_shape={encoder_last_shape}")
         encoder_last_layer = hidden = Flatten()(hidden)
         self.z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/latent_mean")(hidden)
         self.z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/latent_log_var")(hidden)
@@ -62,8 +63,8 @@ class VAEModel:
         self.training_model = Model([self.frame_in, self.action_in], self.decoder(z), name="VAE/training")
 
     def compile(self):
-        # optimizer = Adam(lr=self.config.train.vae.lr)
-        optimizer = SGD(lr=self.config.train.vae.lr, momentum=0.9)
+        optimizer = Adam(lr=self.config.train.vae.lr)
+        # optimizer = SGD(lr=self.config.train.vae.lr, momentum=0.9)
         self.training_model.compile(optimizer=optimizer, loss=self.vae_loss)
 
     @staticmethod
