@@ -90,7 +90,7 @@ class ModelConfig(ConfigBase):
 class VAEModelConfig(ConfigBase):
     def __init__(self):
         self.conv_layers = [
-            dict(filters=32, kernel_size=8, strides=4, activation="relu"),
+            dict(filters=32, kernel_size=4, strides=2, activation="relu"),
             dict(filters=32, kernel_size=3, strides=1, activation="relu"),
         ]
         self.latent_dim = 8

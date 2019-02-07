@@ -26,6 +26,7 @@ class TrainingDataRecorder(EventHandler):
     def reset(self):
         self.data = []
         self.last_obs = None
+        self.step_info = None
 
     def begin_episode(self, ep: int):
         self.reset()
@@ -39,8 +40,7 @@ class TrainingDataRecorder(EventHandler):
 
     def before_step(self):
         if self.last_obs is None:
-            self.step_info = None
-            return
+            self.last_obs = [0, 0, -1]
 
         obs = list(self.last_obs)
         obs[0] = (self.observation.frame_history.last_half_frame * 255).astype(np.uint8)
@@ -51,9 +51,6 @@ class TrainingDataRecorder(EventHandler):
 
     def after_step(self, params: EventParamsAfterStep):
         self.last_obs = params.obs
-        if self.step_info is None:
-            return
-
         self.step_info['action'] = Action.to_int(params.action)
         self.step_info['reward'] = float(params.reward)
         self.step_info['done'] = params.done

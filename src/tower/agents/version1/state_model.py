@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from tower.agents.version1.vae_model import VAEModel
 from tower.config import Config
 
@@ -5,6 +7,9 @@ from tensorflow.python.keras import backend as K
 import tensorflow as tf
 import numpy as np
 from tensorflow.python import keras
+
+
+logger = getLogger(__name__)
 
 
 class StateModel:
@@ -27,4 +32,7 @@ class StateModel:
         self.model.compile()
 
     def fit(self, frame: np.ndarray, next_frame: np.ndarray, action: np.ndarray):
-        self.model.training_model.fit([frame, action], [frame, next_frame], epochs=1)
+        logger.info(f"fit data shape: frame={frame.shape}, next_frame={next_frame.shape}, action={action.shape}")
+
+        trues = np.concatenate([frame, next_frame], axis=-1)
+        self.model.training_model.fit([frame, action], trues, epochs=1)

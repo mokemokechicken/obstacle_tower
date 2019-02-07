@@ -1,10 +1,10 @@
 from logging import getLogger
 
 import numpy as np
-from tensorflow.python.keras import Model, Input
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
-from tensorflow.python.keras.layers import Dense, Lambda, Reshape, Conv2D, Conv2DTranspose, Flatten, Concatenate
+from tensorflow.python.keras.layers import Dense, Lambda, Reshape, Conv2D, Conv2DTranspose, Flatten, Concatenate, Input
+from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.optimizers import Adam
 
 from tower.config import Config
@@ -30,6 +30,7 @@ class VAEModel:
         frame_in = Input(feature_shape, name="VAE/x_input")
         hidden = frame_in
         for i, conv in enumerate(vc.conv_layers):
+            logger.info(f"conv2d param: {conv}")
             hidden = Conv2D(name=f"VAE/encoder_conv2D_{i + 1}", **conv)(hidden)
         encoder_last_shape = tuple(x for x in K.int_shape(hidden) if x is not None)
         encoder_last_layer = hidden = Flatten()(hidden)
@@ -54,8 +55,7 @@ class VAEModel:
         self.next_z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_log_var")(
             encoder_and_action)
 
-        z_sigma = K.exp(0.5 * self.z_log_var)
-        self.encoder = Model(frame_in, [self.z_mean, z_sigma], name="VAE/encoder")
+        self.encoder = Model(frame_in, [self.z_mean, self.z_log_var], name="VAE/encoder")
         self.decoder = Model(z_placeholder, x_decoded_mean, name="VAE/decoder")
         self.training_model = Model([frame_in, action_in], self.decoder(z), name="VAE/training")
 
@@ -72,7 +72,7 @@ class VAEModel:
 
     def vae_loss(self, trues, x_decoded_mean):
         z_mean, z_log_var, next_z_mean, next_z_log_var = self.z_mean, self.z_log_var, self.next_z_mean, self.next_z_log_var
-        current_frame, next_frame = trues
+        current_frame, next_frame = trues[:, :, :, 0:3], trues[:, :, :, 3:6]
 
         # 次フレーム
         next_z_mean_of_current, next_z_log_var_of_current = self.encoder(next_frame)
@@ -94,7 +94,7 @@ class VAEModel:
 
     @staticmethod
     def reconstruct_loss(y_true, y_pred):
-        return K.sum(K.square(y_pred - y_true), axis=-1)
+        return K.sum(K.square(y_pred - y_true), axis=[1, 2, 3])
 
     def freeze(self):
         for l in self.training_model.layers:

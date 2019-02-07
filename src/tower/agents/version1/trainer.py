@@ -38,6 +38,7 @@ class Trainer(TrainerBase):
         ep_size = len(all_episode_list)
         ep_batch_size = ep_size // int(math.ceil(ep_size / self.config.train.max_episode_in_one_time))
         batch_num = ep_size // ep_batch_size
+        logger.info(f"{ep_size} episodes found")
 
         for bi in range(batch_num):
             logger.info(f"StateModel Training {bi+1}/{batch_num}")
@@ -49,6 +50,7 @@ class Trainer(TrainerBase):
                             training_data.action[idx_list])
 
     def make_training_data(self, episode_list):
+        logger.info(f"preparing training data")
         tc = self.config.train
 
         episodes = self.memory.load_episodes(episode_list)
@@ -60,7 +62,7 @@ class Trainer(TrainerBase):
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):
                 training_data['frame'].append(step['state'][0] / 255.)
                 training_data['next_frame'].append(next_step['state'][0] / 255.)
-                training_data['action'].append(to_onehot(Action.to_int(step['action']), Action.size))
+                training_data['action'].append(to_onehot(step['action'], Action.size))
                 reward = np.sum(rewards[t:t + tc.importance_step])
                 map_reward = np.sum(map_rewards[t:t + tc.importance_step])
                 training_data['importance'].append(reward + tc.map_reward_weight * map_reward)
