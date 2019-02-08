@@ -17,7 +17,6 @@ class InformationHandler(EventHandler):
         obs = self.obs
         self.screen.show("original", obs.frame_history.last_frame)
         self.screen.show("map", obs.map_observation.concat_images())
-        cv2.waitKey(self.config.play.wait_per_frame)
 
         if len(obs.frame_history.small_frame_pixel_diffs) > 0:
             f1 = obs.frame_history.small_frame_pixel_diffs[-1]
@@ -26,3 +25,5 @@ class InformationHandler(EventHandler):
                 f1 = np.concatenate((f2, f1), axis=1)
             self.screen.show("diff", f1)
 
+    def end_loop(self):
+        cv2.waitKey(self.config.play.wait_per_frame)
