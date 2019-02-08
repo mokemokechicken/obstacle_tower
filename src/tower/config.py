@@ -115,6 +115,7 @@ class EvolutionConfig(ConfigBase):
         self.n_test_per_epoch = 5
         self.learning_rate = 0.1
         self.noise_sigma = 0.5
+        self.use_best_action = True
 
 
 class PolicyModelConfig(ConfigBase):

@@ -128,8 +128,10 @@ class EvolutionAgent(AgentBase):
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
         actions = self.policy_model.predict(state, obs[1], obs[2])
-        action = np.random.choice(range(len(actions)), p=actions)
-        # action = np.argmax(actions)
+        if self.config.evolution.use_best_action:
+            action = np.argmax(actions)
+        else:
+            action = np.random.choice(range(len(actions)), p=actions)
         return LimitedAction.from_int(action)
 
 
