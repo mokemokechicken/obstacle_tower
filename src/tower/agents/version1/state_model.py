@@ -4,6 +4,7 @@ import numpy as np
 
 from tower.agents.version1.vae_model import VAEModel
 from tower.config import Config
+from tower.lib.digest_util import get_file_digest
 from tower.lib.image_util import bgr_to_hsv, hsv_to_bgr
 
 logger = getLogger(__name__)
@@ -13,9 +14,11 @@ class StateModel:
     def __init__(self, config: Config):
         self.config = config
         self.model: VAEModel = None
+        self.digest: str = None
 
     def load_model(self):
-        self.build()
+        if self.model is None:
+            self.build()
         try:
             self.model.encoder.load_weights(str(self.encoder_file_path))
             self.model.decoder.load_weights(str(self.decoder_file_path))
@@ -23,6 +26,19 @@ class StateModel:
             return True
         except Exception:
             return False
+
+    def load_model_if_updated(self):
+        if not self._is_model_file_already_loaded():
+            self.load_model()
+
+    def _is_model_file_already_loaded(self):
+        if self.digest is None:
+            return False
+        digest = self._encoder_file_digest()
+        return digest and self.digest == digest
+
+    def _encoder_file_digest(self):
+        return get_file_digest(self.encoder_file_path)
 
     def save_model(self):
         logger.info(f"saving state model")

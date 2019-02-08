@@ -46,6 +46,7 @@ class EvolutionAgent(AgentBase):
 
         for epoch_idx in range(ec.n_epoch):
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            self.state_model.load_model_if_updated()
             self.start_floor = (epoch_idx % 20) + 1
             test_results = []
             original_parameters = self.policy_model.get_parameters()
