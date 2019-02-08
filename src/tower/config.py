@@ -77,8 +77,8 @@ class VAETrainConfig(ConfigBase):
         self.lr_patience = 5
         self.lr_min = self.lr * 0.001
 
-        self.epochs = 300
-        self.steps_per_epoch = 100
+        self.epochs = 100
+        self.steps_per_epoch = 1000
         self.batch_size = 32
 
 
@@ -91,11 +91,10 @@ class ModelConfig(ConfigBase):
 
 class VAEModelConfig(ConfigBase):
     def __init__(self):
-        self.hsv_model = True
+        self.hsv_model = False
         self.conv_layers = [
             # dict(filters=32, kernel_size=4, strides=2, activation="relu", padding="same"),
             # dict(filters=32, kernel_size=3, strides=2, activation="relu", padding="same"),
-
             dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
             dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
             dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),

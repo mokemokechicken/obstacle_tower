@@ -51,6 +51,7 @@ class StateModel:
     def decode_from_state(self, state):
         frame = self.model.decoder.predict(np.expand_dims(state, axis=0))[0]
         if self.config.model.vae.hsv_model:
+            frame[:, :, 1:3] += 0.5
             frame = hsv_to_bgr(frame, to_float=True, from_float=True)
         return frame
 
