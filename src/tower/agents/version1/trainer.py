@@ -1,6 +1,7 @@
 import math
 from collections import namedtuple, defaultdict
 from logging import getLogger
+from pathlib import Path
 
 import PIL
 import cv2
@@ -42,7 +43,10 @@ class Trainer(TrainerBase):
 
         state_model.compile()
 
-        generator = self.episode_generator()
+        self.memory = FileMemory(self.config)
+        self.memory.forget_past()
+        all_episode_list = list(self.memory.episodes())
+        generator = self.episode_generator(all_episode_list)
         vae = self.config.train.vae
         callbacks = [
             ReduceLROnPlateau(factor=vae.lr_decay_factor, patience=vae.lr_patience, min_lr=vae.lr_min,
@@ -53,10 +57,7 @@ class Trainer(TrainerBase):
                                                        epochs=vae.epochs, callbacks=callbacks)
         state_model.save_model()
 
-    def episode_generator(self):
-        self.memory = FileMemory(self.config)
-
-        all_episode_list = list(self.memory.episodes())
+    def episode_generator(self, all_episode_list):
         ep_size = len(all_episode_list)
         ep_batch_size = ep_size // int(math.ceil(ep_size / self.config.train.max_episode_in_one_time))
         batch_num = ep_size // ep_batch_size
@@ -68,7 +69,7 @@ class Trainer(TrainerBase):
         while True:
             np.random.shuffle(all_episode_list)
             for bi in range(batch_num):
-                episode_list = all_episode_list[bi*ep_batch_size:(bi+1)*ep_batch_size]
+                episode_list = all_episode_list[bi * ep_batch_size:(bi + 1) * ep_batch_size]
                 if training_data is None:
                     training_data = self.make_training_data(episode_list)
                 data_size = len(training_data.frame)
@@ -89,7 +90,7 @@ class Trainer(TrainerBase):
         # logger.info(f"preparing training data")
         tc = self.config.train
 
-        discounts = [tc.discount_rate**i for i in range(tc.importance_step)]
+        discounts = [tc.discount_rate ** i for i in range(tc.importance_step)]
 
         episodes = self.memory.load_episodes(episode_list)
         training_data = defaultdict(lambda: [])
@@ -106,7 +107,8 @@ class Trainer(TrainerBase):
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):
                 if self.config.model.vae.hsv_model:
                     training_data['frame'].append(bgr_to_hsv(step['state'][0], from_float=False, to_float=True))
-                    training_data['next_frame'].append(bgr_to_hsv(next_step['state'][0], from_float=False, to_float=True))
+                    training_data['next_frame'].append(
+                        bgr_to_hsv(next_step['state'][0], from_float=False, to_float=True))
                 else:
                     training_data['frame'].append(step['state'][0] / 255.)
                     training_data['next_frame'].append(next_step['state'][0] / 255.)

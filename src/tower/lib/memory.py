@@ -1,10 +1,14 @@
 import gzip
 import pickle
 from datetime import datetime
+from logging import getLogger
+from pathlib import Path
 from typing import Iterator
 from uuid import uuid4
 
 from tower.config import Config
+
+logger = getLogger(__name__)
 
 
 class Memory:
@@ -44,3 +48,13 @@ class FileMemory(Memory):
                 episode_data = pickle.load(f)
                 ret.append(episode_data)  # format -> see TrainingDataRecorder#end_episode()
         return ret
+
+    def forget_past(self):
+        all_episodes = list(sorted(self.episodes(), reverse=True))
+        if len(all_episodes) > self.config.train.memory_size:
+            logger.info(f"forget old {len(all_episodes) - self.config.train.memory_size} episodes")
+            for ep in all_episodes[self.config.train.memory_size:]:
+                try:
+                    Path(ep).unlink()
+                except Exception as e:
+                    logger.info(f"can not remove {ep}: {e}")

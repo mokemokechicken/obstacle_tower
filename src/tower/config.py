@@ -72,6 +72,7 @@ class TrainConfig(ConfigBase):
         self.death_reward_weight = 0.1
         self.max_episode_in_one_time = 100
         self.discount_rate = 0.97
+        self.memory_size = 1000
 
 
 class VAETrainConfig(ConfigBase):
@@ -82,7 +83,7 @@ class VAETrainConfig(ConfigBase):
         self.lr_decay_factor = 0.1
         self.lr_patience = 5
         self.lr_min = self.lr * 0.001
-        self.epochs = 300
+        self.epochs = 100
         self.steps_per_epoch = 1000
         self.batch_size = 32
         self.early_stopping_patience = 30
