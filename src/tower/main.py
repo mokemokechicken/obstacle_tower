@@ -2,6 +2,7 @@ import argparse
 from logging import getLogger
 
 from tower.agents.random.agent import RandomAgent
+from tower.agents.version1.agent import EvolutionAgent
 from tower.command import play, train
 from tower.config import load_config
 from tower.lib.logger import setup_logger
@@ -18,6 +19,7 @@ def create_parser():
     parser.add_argument('--wait', type=int, help="wait milli seconds per frame (0 is forever)")
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--new-model', action="store_true", help="create new state model")
+    parser.add_argument('--random', action="store_true", help="play with RandomAgent")
     return parser
 
 
@@ -41,6 +43,7 @@ def start():
     setup_logger(config.resource.log_file_path, log_level)
 
     if args.command == "play":
-        play.start(config, RandomAgent)
+        agent = RandomAgent if args.random else EvolutionAgent
+        play.start(config, agent)
     elif args.command == "train":
         train.start(config)

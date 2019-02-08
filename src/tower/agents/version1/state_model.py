@@ -1,14 +1,9 @@
-import math
 from logging import getLogger
+
+import numpy as np
 
 from tower.agents.version1.vae_model import VAEModel
 from tower.config import Config
-
-from tensorflow.python.keras import backend as K
-import tensorflow as tf
-import numpy as np
-from tensorflow.python import keras
-
 from tower.lib.image_util import bgr_to_hsv, hsv_to_bgr
 
 logger = getLogger(__name__)

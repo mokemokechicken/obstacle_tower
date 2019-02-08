@@ -32,6 +32,8 @@ class Config(ConfigBase):
         self.map = MapConfig()
         self.train = TrainConfig()
         self.model = ModelConfig()
+        self.evolution = EvolutionConfig()
+        self.policy_model = PolicyModelConfig()
 
 
 class ResourceConfig(ConfigBase):
@@ -101,3 +103,13 @@ class VAEModelConfig(ConfigBase):
         ]
         self.latent_dim = 8  # 24  # 8
         self.action_size = 54
+
+
+class EvolutionConfig(ConfigBase):
+    def __init__(self):
+        self.n_play_per_test = 5
+
+
+class PolicyModelConfig(ConfigBase):
+    def __init__(self):
+        self.n_actions = 9
