@@ -100,6 +100,9 @@ class VAEModelConfig(ConfigBase):
             dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
             dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
             dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
+            # dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
+            # dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
+            # dict(filters=128, kernel_size=3, strides=3, activation="relu", padding="same"),
         ]
         self.latent_dim = 8  # 24  # 8
         self.action_size = 54
@@ -107,9 +110,9 @@ class VAEModelConfig(ConfigBase):
 
 class EvolutionConfig(ConfigBase):
     def __init__(self):
-        self.n_epoch = 3
-        self.n_play_per_test = 1
-        self.n_test_per_epoch = 2
+        self.n_epoch = 100
+        self.n_play_per_test = 3
+        self.n_test_per_epoch = 5
         self.learning_rate = 0.1
         self.noise_sigma = 0.5
 

@@ -45,10 +45,10 @@ class PolicyModel:
         return actions
 
     def get_parameters(self):
-        return self.parameters.get_weights()
+        return self.model.get_weights()
 
     def set_parameters(self, parameters):
-        self.parameters.set_weights(parameters)
+        self.model.set_weights(parameters)
 
     def compile(self):
         self.model.compile()

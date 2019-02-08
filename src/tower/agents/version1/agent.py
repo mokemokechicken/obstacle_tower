@@ -40,6 +40,7 @@ class EvolutionAgent(AgentBase):
 
     def play(self):
         ec = self.config.evolution
+        best_rewards = []
 
         for epoch_idx in range(ec.n_epoch):
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
@@ -56,6 +57,8 @@ class EvolutionAgent(AgentBase):
             self.policy_model.set_parameters(new_parameters)
             logger.info(f"Finish Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
             self.policy_model.save_model()
+            best_rewards.append(float(np.max([x[0] for x in test_results])))
+            logger.info(f"best reward history={best_rewards}")
 
     def make_new_parameters(self, original_parameters, sigma):
         new_parameters = []
