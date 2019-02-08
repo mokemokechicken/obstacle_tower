@@ -50,6 +50,7 @@ class PlayConfig(ConfigBase):
         self.render = False
         self.wait_per_frame = 1
         self.n_episode = 1
+        self.render_state = False
 
 
 class MapConfig(ConfigBase):
@@ -98,12 +99,12 @@ class VAEModelConfig(ConfigBase):
         self.conv_layers = [
             # dict(filters=32, kernel_size=4, strides=2, activation="relu", padding="same"),
             # dict(filters=32, kernel_size=3, strides=2, activation="relu", padding="same"),
-            dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
-            dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
-            dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
-            # dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
-            # dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
-            # dict(filters=128, kernel_size=3, strides=3, activation="relu", padding="same"),
+            # dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
+            # dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
+            # dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
+            dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
+            dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
+            dict(filters=128, kernel_size=3, strides=3, activation="relu", padding="same"),
         ]
         self.latent_dim = 8  # 24  # 8
         self.action_size = 54

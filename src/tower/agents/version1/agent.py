@@ -32,8 +32,9 @@ class EvolutionAgent(AgentBase):
         if self.config.play.render:
             info = InformationHandler(self.config, self.observation)
             self.observation.add_event_handler("info", info)
-            state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info)
-            self.observation.add_event_handler("state_monitor", state_monitor)
+            if self.config.play.render_state:
+                state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info)
+                self.observation.add_event_handler("state_monitor", state_monitor)
 
         recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
         self.observation.add_event_handler("recorder", recorder)

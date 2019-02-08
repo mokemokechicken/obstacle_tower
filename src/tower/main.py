@@ -16,6 +16,7 @@ def create_parser():
     parser.add_argument('-c', help="config file path", dest="config")
     parser.add_argument('--ep', help="number of episode play", type=int)
     parser.add_argument('--render', help="render screen when playing", action="store_true")
+    parser.add_argument('--render-state', help="render state on screen when playing", action="store_true")
     parser.add_argument('--wait', type=int, help="wait milli seconds per frame (0 is forever)")
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--new-model', action="store_true", help="create new state model")
@@ -32,6 +33,8 @@ def start():
         config.play.n_episode = args.ep
     if args.render:
         config.play.render = args.render
+    if args.render_state:
+        config.play.render_state = args.render_state
     if args.wait is not None:
         config.play.wait_per_frame = args.wait
     if args.debug:
