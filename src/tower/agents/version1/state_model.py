@@ -1,3 +1,4 @@
+import math
 from logging import getLogger
 
 from tower.agents.version1.vae_model import VAEModel
@@ -40,13 +41,18 @@ class StateModel:
         self.model.build(mc.frame_shape)
 
     def encode_to_state(self, half_frame):
-        z_means, _ = self.model.encoder.predict(np.expand_dims(half_frame, axis=0))
-        return z_means[0]
+        z_means, z_log_vars = self.model.encoder.predict(np.expand_dims(half_frame, axis=0))
+        z_sigma = np.sqrt(np.exp(z_log_vars[0]))
+        return z_means[0], z_sigma
+
+    def decode_from_state(self, state):
+        frames = self.model.decoder.predict(np.expand_dims(state, axis=0))
+        return frames[0]
 
     def reconstruct_from_frame(self, half_frame):
-        z_mean = self.encode_to_state(half_frame)
-        frames = self.model.decoder.predict(np.expand_dims(z_mean, axis=0))
-        return frames[0]
+        z_mean, z_sigma = self.encode_to_state(half_frame)
+        frame = self.decode_from_state(z_mean)
+        return frame
 
     def compile(self):
         self.model.compile()
