@@ -18,6 +18,7 @@ class EvolutionAgent(AgentBase):
     state_model: StateModel
     policy_model: PolicyModel
     observation: ObservationManager
+    start_floor: int
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
@@ -45,6 +46,7 @@ class EvolutionAgent(AgentBase):
 
         for epoch_idx in range(ec.n_epoch):
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            self.start_floor = (epoch_idx % 20) + 1
             test_results = []
             original_parameters = self.policy_model.get_parameters()
             for test_idx in range(ec.n_test_per_epoch):
@@ -86,7 +88,7 @@ class EvolutionAgent(AgentBase):
     def play_n_episode(self, n_episode) -> float:
         rewards = []
         for ep in range(n_episode):
-            self.observation.floor(1)
+            self.observation.floor(self.start_floor)
             self.observation.reset()
 
             self.observation.begin_episode(ep)

@@ -114,9 +114,9 @@ class VAEModelConfig(ConfigBase):
 
 class EvolutionConfig(ConfigBase):
     def __init__(self):
-        self.n_epoch = 100
+        self.n_epoch = 200
         self.n_play_per_test = 3
-        self.n_test_per_epoch = 5
+        self.n_test_per_epoch = 7
         self.learning_rate = 0.1
         self.noise_sigma = 0.5
         self.use_best_action = False
