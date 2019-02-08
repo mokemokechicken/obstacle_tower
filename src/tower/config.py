@@ -77,7 +77,7 @@ class VAETrainConfig(ConfigBase):
         self.lr_patience = 5
         self.lr_min = self.lr * 0.001
 
-        self.epochs = 100
+        self.epochs = 300
         self.steps_per_epoch = 1000
         self.batch_size = 32
 
@@ -96,5 +96,5 @@ class VAEModelConfig(ConfigBase):
             dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
             dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
         ]
-        self.latent_dim = 8
+        self.latent_dim = 8  # 24  # 8
         self.action_size = 54
