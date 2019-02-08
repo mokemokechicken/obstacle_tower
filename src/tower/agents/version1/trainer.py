@@ -2,10 +2,16 @@ import math
 from collections import namedtuple, defaultdict
 from logging import getLogger
 
+import PIL
+import cv2
+from PIL import Image
+from PIL.Image import Image
+from cv2.cv2 import COLOR_BGR2HSV
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 
 from tower.agents.version1.state_model import StateModel
 from tower.const import Action
+from tower.lib.image_util import bgr_to_hsv
 from tower.lib.memory import FileMemory
 from tower.spike.util import to_onehot
 from ..base import TrainerBase
@@ -89,8 +95,8 @@ class Trainer(TrainerBase):
             rewards = np.array([step['reward'] for step in steps])
             map_rewards = np.array([step['map_reward'] for step in steps])
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):
-                training_data['frame'].append(step['state'][0] / 255.)
-                training_data['next_frame'].append(next_step['state'][0] / 255.)
+                training_data['frame'].append(bgr_to_hsv(step['state'][0]) / 255.)
+                training_data['next_frame'].append(bgr_to_hsv(next_step['state'][0]) / 255.)
                 training_data['action'].append(to_onehot(step['action'], Action.size))
                 reward = np.sum(rewards[t:t + tc.importance_step])
                 map_reward = np.sum(map_rewards[t:t + tc.importance_step])
@@ -105,3 +111,4 @@ class Trainer(TrainerBase):
         importance = np.exp(importance) / np.sum(np.exp(importance))
         # logger.info(f"loaded {len(frame)} frames")
         return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance)
+

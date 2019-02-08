@@ -47,7 +47,15 @@ class VAEModel:
         h_decoded = Reshape(encoder_last_shape)(h_decoded)
         for i, conv in enumerate(reversed(vc.conv_layers)):
             h_decoded = Conv2DTranspose(name=f"VAE/decoder_conv2D_{i + 1}", **conv)(h_decoded)
-        h_decoded = Conv2D(filters=3, kernel_size=1, strides=1, activation="sigmoid")(h_decoded)
+
+        if False:  # RGB Version
+            h_decoded = Conv2D(filters=3, kernel_size=1, strides=1, activation="sigmoid")(h_decoded)
+        else:  # HSV Version
+            ch_h_decoded = Conv2D(filters=1, kernel_size=1, strides=1, activation="linear")(h_decoded)
+            ch_h_decoded = Lambda(lambda x: x - K.round(x - 0.5))(ch_h_decoded)
+            ch_sv_decoded = Conv2D(filters=2, kernel_size=1, strides=1, activation="sigmoid")(h_decoded)
+            h_decoded = Concatenate(axis=-1)([ch_h_decoded, ch_sv_decoded])
+
         assert feature_shape == K.int_shape(h_decoded)[1:], f"{feature_shape} != {K.int_shape(h_decoded)[1:]}"
         x_decoded_mean = h_decoded
 
@@ -91,7 +99,7 @@ class VAEModel:
         # 1項目の計算
         latent_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
         # 2項目の計算
-        reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
+        reconstruct_loss = self.reconstruct_loss_hsv_image(current_frame, x_decoded_mean)
 
         total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
         total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
@@ -100,6 +108,19 @@ class VAEModel:
     @staticmethod
     def reconstruct_loss(y_true, y_pred):
         x = K.mean(K.square(y_pred - y_true), axis=[3])
+        return K.sum(x, axis=[1, 2])
+
+    @staticmethod
+    def reconstruct_loss_hsv_image(y_true, y_pred):
+        # dim means (batch, y, x, ch(hsv))
+        v1 = K.square(y_true[:, :, :, 0:1] - y_pred[:, :, :, 0:1])
+        v2 = K.square(y_true[:, :, :, 0:1] - (y_pred[:, :, :, 0:1] - 1))
+        v3 = K.square(y_true[:, :, :, 0:1] - (y_pred[:, :, :, 0:1] + 1))
+        vv = K.concatenate([v1, v2, v3], axis=3)  # H of HSV is cyclic around 0 to 1
+        h_loss = K.min(vv, axis=3)
+        sv_loss = K.sum(K.square(y_true[:, :, :, 1:3] - y_pred[:, :, :, 1:3]), axis=3)
+
+        x = (h_loss + sv_loss/8.)  # sv_loss is less importance than h_loss
         return K.sum(x, axis=[1, 2])
 
     def freeze(self):

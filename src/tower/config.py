@@ -65,7 +65,7 @@ class TrainConfig(ConfigBase):
         self.vae = VAETrainConfig()
         self.importance_step = 10
         self.map_reward_weight = 0.000001
-        self.max_episode_in_one_time = 100
+        self.max_episode_in_one_time = 1  # 100
 
 
 class VAETrainConfig(ConfigBase):
@@ -92,9 +92,12 @@ class ModelConfig(ConfigBase):
 class VAEModelConfig(ConfigBase):
     def __init__(self):
         self.conv_layers = [
-            dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
-            dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
-            dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
+            dict(filters=32, kernel_size=4, strides=2, activation="relu", padding="same"),
+            dict(filters=32, kernel_size=3, strides=2, activation="relu", padding="same"),
+
+            # dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
+            # dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
+            # dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
         ]
         self.latent_dim = 8  # 24  # 8
         self.action_size = 54
