@@ -46,11 +46,11 @@ class EvolutionAgent(AgentBase):
             test_results = []
             original_parameters = self.policy_model.get_parameters()
             for test_idx in range(ec.n_test_per_epoch):
-                logger.info(f"Start Test: epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch}")
+                logger.info(f"Start Test: Epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch}")
                 new_parameters, noises = self.make_new_parameters(original_parameters, sigma=ec.noise_sigma)
                 self.policy_model.set_parameters(new_parameters)
                 reward = self.play_n_episode(ec.n_play_per_test)
-                logger.info(f"Finish Test: epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch} -> mean reward={reward}")
+                logger.info(f"Finish Test: Epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch} -> mean reward={reward}")
                 test_results.append((reward, noises))
             new_parameters = self.update_parameters(original_parameters, test_results)
             self.policy_model.set_parameters(new_parameters)
