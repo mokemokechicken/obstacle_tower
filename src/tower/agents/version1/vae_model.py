@@ -48,7 +48,7 @@ class VAEModel:
         for i, conv in enumerate(reversed(vc.conv_layers)):
             h_decoded = Conv2DTranspose(name=f"VAE/decoder_conv2D_{i + 1}", **conv)(h_decoded)
 
-        if False:  # RGB Version
+        if not vc.hsv_model:  # RGB Version
             h_decoded = Conv2D(filters=3, kernel_size=1, strides=1, activation="sigmoid")(h_decoded)
         else:  # HSV Version
             ch_h_decoded = Conv2D(filters=1, kernel_size=1, strides=1, activation="linear")(h_decoded)
@@ -99,7 +99,10 @@ class VAEModel:
         # 1項目の計算
         latent_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
         # 2項目の計算
-        reconstruct_loss = self.reconstruct_loss_hsv_image(current_frame, x_decoded_mean)
+        if self.config.model.vae.hsv_model:
+            reconstruct_loss = self.reconstruct_loss_hsv_image(current_frame, x_decoded_mean)
+        else:
+            reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
 
         total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
         total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight

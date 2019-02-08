@@ -95,8 +95,12 @@ class Trainer(TrainerBase):
             rewards = np.array([step['reward'] for step in steps])
             map_rewards = np.array([step['map_reward'] for step in steps])
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):
-                training_data['frame'].append(bgr_to_hsv(step['state'][0]) / 255.)
-                training_data['next_frame'].append(bgr_to_hsv(next_step['state'][0]) / 255.)
+                if self.config.model.vae.hsv_model:
+                    training_data['frame'].append(bgr_to_hsv(step['state'][0], from_float=False, to_float=True))
+                    training_data['next_frame'].append(bgr_to_hsv(next_step['state'][0], from_float=False, to_float=True))
+                else:
+                    training_data['frame'].append(step['state'][0] / 255.)
+                    training_data['next_frame'].append(next_step['state'][0] / 255.)
                 training_data['action'].append(to_onehot(step['action'], Action.size))
                 reward = np.sum(rewards[t:t + tc.importance_step])
                 map_reward = np.sum(map_rewards[t:t + tc.importance_step])

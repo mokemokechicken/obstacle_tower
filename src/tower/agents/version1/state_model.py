@@ -9,6 +9,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python import keras
 
+from tower.lib.image_util import bgr_to_hsv, hsv_to_bgr
 
 logger = getLogger(__name__)
 
@@ -41,13 +42,17 @@ class StateModel:
         self.model.build(mc.frame_shape)
 
     def encode_to_state(self, half_frame):
+        if self.config.model.vae.hsv_model:
+            half_frame = bgr_to_hsv(half_frame, to_float=True, from_float=True)
         z_means, z_log_vars = self.model.encoder.predict(np.expand_dims(half_frame, axis=0))
         z_sigma = np.sqrt(np.exp(z_log_vars[0]))
         return z_means[0], z_sigma
 
     def decode_from_state(self, state):
-        frames = self.model.decoder.predict(np.expand_dims(state, axis=0))
-        return frames[0]
+        frame = self.model.decoder.predict(np.expand_dims(state, axis=0))[0]
+        if self.config.model.vae.hsv_model:
+            frame = hsv_to_bgr(frame, to_float=True, from_float=True)
+        return frame
 
     def reconstruct_from_frame(self, half_frame):
         z_mean, z_sigma = self.encode_to_state(half_frame)

@@ -16,7 +16,8 @@ class StateMonitor(EventHandler):
         self.plots = None
 
     def before_step(self):
-        state, sigma = self.state_model.encode_to_state(self.frame_history.last_half_frame)
+        half_frame = self.frame_history.last_half_frame
+        state, sigma = self.state_model.encode_to_state(half_frame)
         frame = self.state_model.decode_from_state(state)
         # self.info.screen.show("reconstruct", frame)
         self.plot(frame, state, sigma)
