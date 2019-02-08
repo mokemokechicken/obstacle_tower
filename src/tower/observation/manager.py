@@ -18,6 +18,7 @@ class ObservationManager:
         self.config = config
         self._env = env
         self._event_handlers: OrderedDict[str, EventHandler] = OrderedDict()
+        self._is_first_step = True
 
     def setup(self):
         frame_history = FrameHistory(self._env)
@@ -33,11 +34,15 @@ class ObservationManager:
     def step(self, action):
         self.before_step()
         obs, reward, done, info = self._env.step(action)
+        if self._is_first_step:
+            reward = 0
         params = EventParamsAfterStep(action, obs, reward, done, info)
         self.after_step(params)
+        self._is_first_step = False
         return obs, reward, done, info
 
     def reset(self):
+        self._is_first_step = True
         ret = self._env.reset()
         for h in self._event_handlers.values():
             h.reset()
