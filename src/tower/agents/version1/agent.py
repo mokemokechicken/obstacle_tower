@@ -101,6 +101,8 @@ class EvolutionAgent(AgentBase):
         max_time_remain = 1
         real_reward = 0
         map_reward = 0
+        keep_rate = 0
+        last_action = None
 
         while not done:
             self.observation.begin_loop()
@@ -111,8 +113,12 @@ class EvolutionAgent(AgentBase):
             last_obs[1] = last_obs[1] / 5.
             last_obs[2] = 1.0 * last_obs[2] / max_time_remain
 
-            action = self.decide_action(last_obs)
+            if last_action is None or keep_rate <= np.random.random():
+                action, keep_rate = self.decide_action(last_obs)
+            else:
+                action = last_action
             obs, reward, done, info = self.observation.step(action)
+            last_action = action
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
             real_reward += reward
@@ -127,12 +133,12 @@ class EvolutionAgent(AgentBase):
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
-        actions = self.policy_model.predict(state, obs[1], obs[2])
+        actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2])
         if self.config.evolution.use_best_action:
             action = np.argmax(actions)
         else:
             action = np.random.choice(range(len(actions)), p=actions)
-        return LimitedAction.from_int(action)
+        return LimitedAction.from_int(action), keep_rate * 0.9
 
 
 class LimitedAction:

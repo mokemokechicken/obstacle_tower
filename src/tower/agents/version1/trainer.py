@@ -111,7 +111,7 @@ class Trainer(TrainerBase):
         action = np.array(training_data['action'])
         importance = np.array(training_data['importance'])
 
-        importance = (importance - np.mean(importance)) / np.std(importance)
+        importance = (importance - np.mean(importance)) / np.std(importance) * tc.importance_scale
         importance = np.exp(importance) / np.sum(np.exp(importance))
         # logger.info(f"loaded {len(frame)} frames")
         return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance)

@@ -15,7 +15,6 @@ class PolicyModel:
     def __init__(self, config: Config):
         self.config = config
         self.model: Model = None
-        self.parameters: Dense = None
 
     def load_model(self):
         try:
@@ -36,13 +35,13 @@ class PolicyModel:
         in_keys = Input((1, ), name="in_keys")
         in_time = Input((1, ), name="in_time")
         in_all = Concatenate(name="in_all")([in_state, in_keys, in_time])
-        self.parameters = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")
-        out_actions = self.parameters(in_all)
-        self.model = Model([in_state, in_keys, in_time], out_actions, name="policy_model")
+        out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")(in_all)
+        out_keep_rate = Dense(1, activation="sigmoid", name="keep_rate")(in_all)
+        self.model = Model([in_state, in_keys, in_time], [out_actions, out_keep_rate], name="policy_model")
 
     def predict(self, state, keys, time_remain):
-        actions = self.model.predict([np.expand_dims(state, axis=0), np.array([[keys]]), np.array([[time_remain]])])[0]
-        return actions
+        actions, kr = self.model.predict([np.expand_dims(state, axis=0), np.array([[keys]]), np.array([[time_remain]])])
+        return actions[0], kr[0]
 
     def get_parameters(self):
         return self.model.get_weights()

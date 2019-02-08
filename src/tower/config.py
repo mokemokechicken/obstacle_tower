@@ -65,7 +65,8 @@ class TrainConfig(ConfigBase):
     def __init__(self):
         self.new_model = False
         self.vae = VAETrainConfig()
-        self.importance_step = 10
+        self.importance_step = 20
+        self.importance_scale = 2
         self.map_reward_weight = 0.000001
         self.max_episode_in_one_time = 100
 
@@ -115,7 +116,7 @@ class EvolutionConfig(ConfigBase):
         self.n_test_per_epoch = 5
         self.learning_rate = 0.1
         self.noise_sigma = 0.5
-        self.use_best_action = True
+        self.use_best_action = False
 
 
 class PolicyModelConfig(ConfigBase):
