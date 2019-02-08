@@ -7,7 +7,7 @@ import cv2
 from PIL import Image
 from PIL.Image import Image
 from cv2.cv2 import COLOR_BGR2HSV
-from tensorflow.python.keras.callbacks import ReduceLROnPlateau
+from tensorflow.python.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
 from tower.agents.version1.state_model import StateModel
 from tower.const import Action
@@ -47,6 +47,7 @@ class Trainer(TrainerBase):
         callbacks = [
             ReduceLROnPlateau(factor=vae.lr_decay_factor, patience=vae.lr_patience, min_lr=vae.lr_min,
                               monitor='loss', verbose=1),
+            EarlyStopping(monitor="loss", patience=vae.early_stopping_patience),
         ]
         state_model.model.training_model.fit_generator(generator, steps_per_epoch=vae.steps_per_epoch,
                                                        epochs=vae.epochs, callbacks=callbacks)
@@ -128,5 +129,5 @@ class Trainer(TrainerBase):
 
     @staticmethod
     def apply_discount(values, discounts):
-        max_len = max(len(values), len(discounts))
+        max_len = min(len(values), len(discounts))
         return values[:max_len] * discounts[:max_len]
