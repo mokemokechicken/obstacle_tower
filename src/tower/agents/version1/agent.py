@@ -39,23 +39,64 @@ class EvolutionAgent(AgentBase):
         self.observation.add_event_handler("recorder", recorder)
 
     def play(self):
-        n_episode = self.config.play.n_episode
-        parameters = self.policy_model.get_parameters()
-        logger.info([x.shape for x in parameters])  # (n_params, n_actions)
+        ec = self.config.evolution
+
+        for epoch_idx in range(ec.n_epoch):
+            logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            test_results = []
+            original_parameters = self.policy_model.get_parameters()
+            for test_idx in range(ec.n_test_per_epoch):
+                logger.info(f"Start Test: epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch}")
+                new_parameters, noises = self.make_new_parameters(original_parameters, sigma=ec.noise_sigma)
+                self.policy_model.set_parameters(new_parameters)
+                reward = self.play_n_episode(ec.n_play_per_test)
+                test_results.append((reward, noises))
+            new_parameters = self.update_parameters(original_parameters, test_results)
+            self.policy_model.set_parameters(new_parameters)
+            logger.info(f"Finish Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            self.policy_model.save_model()
+
+    def make_new_parameters(self, original_parameters, sigma):
+        new_parameters = []
+        noises = []
+        for w in original_parameters:
+            noise = np.random.randn(*w.shape)
+            new_parameters.append(w + sigma * noise)
+            noises.append(noise)
+        return new_parameters, noises
+
+    def update_parameters(self, original_parameters, test_results):
+        ec = self.config.evolution
+        rewards = np.array([x[0] for x in test_results])
+        noises = np.array([x[1] for x in test_results])
+        norm_rewards = (rewards - rewards.mean()) / (rewards.std() + 0.0000001)
+        new_parameters = []
+        for i, w in enumerate(original_parameters):
+            noise_at_i = np.array([n[i] for n in noises])
+            rate = ec.learning_rate / (len(test_results) * ec.noise_sigma)
+            w = w + rate * np.dot(noise_at_i.T, norm_rewards).T
+            new_parameters.append(w)
+        return new_parameters
+
+    def play_n_episode(self, n_episode) -> float:
+        rewards = []
         for ep in range(n_episode):
             self.observation.floor(1)
             self.observation.reset()
 
             self.observation.begin_episode(ep)
             logger.info(f"start episode {ep}/{n_episode}")
-            self.play_episode()
+            rewards.append(self.play_episode())
             logger.info(f"finish episode {ep}/{n_episode}")
             self.observation.end_episode(ep)
+        return float(np.mean(rewards))
 
-    def play_episode(self):
+    def play_episode(self) -> float:
         done = False
         last_obs = None
         max_time_remain = 1
+        real_reward = 0
+        map_reward = 0
 
         while not done:
             self.observation.begin_loop()
@@ -70,11 +111,15 @@ class EvolutionAgent(AgentBase):
             obs, reward, done, info = self.observation.step(action)
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
+            real_reward += reward
+            map_reward += self.observation.map_observation.map_reward * self.config.train.map_reward_weight
 
             self.observation.end_loop()
             last_obs = list(obs)
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
+
+        return real_reward + map_reward
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
