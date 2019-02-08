@@ -69,7 +69,9 @@ class TrainConfig(ConfigBase):
         self.importance_step = 20
         self.importance_scale = 2
         self.map_reward_weight = 0.000001
+        self.death_reward_weight = 0.1
         self.max_episode_in_one_time = 100
+        self.discount_rate = 0.97
 
 
 class VAETrainConfig(ConfigBase):
@@ -102,9 +104,9 @@ class VAEModelConfig(ConfigBase):
             # dict(filters=128, kernel_size=4, strides=2, activation="relu", padding="same"),
             # dict(filters=256, kernel_size=3, strides=2, activation="relu", padding="same"),
             # dict(filters=512, kernel_size=3, strides=1, activation="relu", padding="same"),
+            dict(filters=64, kernel_size=3, strides=3, activation="relu", padding="same"),
             dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
             dict(filters=64, kernel_size=3, strides=2, activation="relu", padding="same"),
-            dict(filters=128, kernel_size=3, strides=3, activation="relu", padding="same"),
         ]
         self.latent_dim = 8  # 24  # 8
         self.action_size = 54

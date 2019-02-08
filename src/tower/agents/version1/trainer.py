@@ -88,12 +88,20 @@ class Trainer(TrainerBase):
         # logger.info(f"preparing training data")
         tc = self.config.train
 
+        discounts = [tc.discount_rate**i for i in range(tc.importance_step)]
+
         episodes = self.memory.load_episodes(episode_list)
         training_data = defaultdict(lambda: [])
         for episode_data in episodes:
             steps = episode_data["steps"]
             rewards = np.array([step['reward'] for step in steps])
             map_rewards = np.array([step['map_reward'] for step in steps])
+            death_rewards = np.zeros_like(map_rewards)
+            last_time = steps[-1]["state"][2]
+            if last_time > 0:
+                logger.info(f"add death penalty")
+                death_rewards[-1] = 1.
+
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):
                 if self.config.model.vae.hsv_model:
                     training_data['frame'].append(bgr_to_hsv(step['state'][0], from_float=False, to_float=True))
@@ -102,9 +110,11 @@ class Trainer(TrainerBase):
                     training_data['frame'].append(step['state'][0] / 255.)
                     training_data['next_frame'].append(next_step['state'][0] / 255.)
                 training_data['action'].append(to_onehot(step['action'], Action.size))
-                reward = np.sum(rewards[t:t + tc.importance_step])
-                map_reward = np.sum(map_rewards[t:t + tc.importance_step])
-                training_data['importance'].append(reward + tc.map_reward_weight * map_reward)
+                reward = np.sum(self.apply_discount(rewards[t:t + tc.importance_step], discounts))
+                map_reward = np.sum(self.apply_discount(map_rewards[t:t + tc.importance_step], discounts))
+                death_reward = np.sum(self.apply_discount(death_rewards[t:t + tc.importance_step], discounts))
+                training_data['importance'].append(reward + tc.map_reward_weight * map_reward +
+                                                   tc.death_reward_weight * death_reward)
 
         frame = np.array(training_data['frame'])
         next_frame = np.array(training_data['next_frame'])
@@ -116,3 +126,7 @@ class Trainer(TrainerBase):
         # logger.info(f"loaded {len(frame)} frames")
         return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance)
 
+    @staticmethod
+    def apply_discount(values, discounts):
+        max_len = max(len(values), len(discounts))
+        return values[:max_len] * discounts[:max_len]

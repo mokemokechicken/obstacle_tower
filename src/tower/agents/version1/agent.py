@@ -114,7 +114,7 @@ class EvolutionAgent(AgentBase):
             last_obs[1] = last_obs[1] / 5.
             last_obs[2] = 1.0 * last_obs[2] / max_time_remain
 
-            if last_action is None or keep_rate <= np.random.random():
+            if last_action is None or keep_rate <= np.random.random() or not self.observation.moving_checker.did_move:
                 action, keep_rate = self.decide_action(last_obs)
             else:
                 action = last_action

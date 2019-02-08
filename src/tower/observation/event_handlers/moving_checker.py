@@ -24,7 +24,7 @@ class MovingChecker(EventHandler):
         self._did_move = True
 
     def reset(self):
-        self._nop_diffs = []
+        self._nop_diffs = [0, 0, 0, 0.1]
         self._other_diffs = []
         self._step = 0
         self._nop_dist = None
