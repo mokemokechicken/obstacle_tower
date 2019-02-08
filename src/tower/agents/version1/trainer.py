@@ -1,13 +1,8 @@
 import math
 from collections import namedtuple, defaultdict
 from logging import getLogger
-from pathlib import Path
 
-import PIL
-import cv2
-from PIL import Image
-from PIL.Image import Image
-from cv2.cv2 import COLOR_BGR2HSV
+import numpy as np
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
 from tower.agents.version1.state_model import StateModel
@@ -16,13 +11,6 @@ from tower.lib.image_util import bgr_to_hsv
 from tower.lib.memory import FileMemory
 from tower.spike.util import to_onehot
 from ..base import TrainerBase
-import numpy as np
-
-# データを取り出して
-# tensorboard とのやりとりは、ここがやるべき
-# 打ち切りとかもね。
-# state_model.update(<data>) くらいがよいIFか
-# 前処理はどっちがやる？
 
 
 TrainingData = namedtuple('TrainingData', 'frame next_frame action importance')
