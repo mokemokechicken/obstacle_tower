@@ -1,10 +1,10 @@
+import numpy as np
+
 from tower.agents.version1.limited_action import LimitedAction
 from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.config import Config
 from tower.lib.memory import FileMemory
-import numpy as np
-
 
 
 class PolicyReTrainer:
@@ -58,5 +58,3 @@ class PolicyReTrainer:
             output_data.append((actions, [keep_rate]))
 
         return input_data, output_data
-
-

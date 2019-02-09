@@ -44,6 +44,7 @@ class ResourceConfig(ConfigBase):
         self.working_dir = _project_base_dir() / "tmp" / "working"
         self.memory_dir = _project_base_dir() / "data" / "memory"
         self.model_dir = _project_base_dir() / "data" / "model"
+        self.new_model_dir = _project_base_dir() / "data" / "new_model"
 
 
 class PlayConfig(ConfigBase):

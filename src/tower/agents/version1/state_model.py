@@ -14,31 +14,28 @@ class StateModel:
     def __init__(self, config: Config):
         self.config = config
         self.model: VAEModel = None
-        self.digest: str = None
 
-    def load_model(self):
+    def load_model(self, new_model=False):
         if self.model is None:
             self.build()
         try:
-            self.model.encoder.load_weights(str(self.encoder_file_path))
-            self.model.decoder.load_weights(str(self.decoder_file_path))
+            if new_model:
+                ep = self.new_encoder_file_path
+                dp = self.new_decoder_file_path
+            else:
+                ep = self.encoder_file_path
+                dp = self.decoder_file_path
+            self.model.encoder.load_weights(str(ep))
+            self.model.decoder.load_weights(str(dp))
             logger.info(f"loading state model success")
             return True
         except Exception:
             return False
 
-    def load_model_if_updated(self):
-        if not self._is_model_file_already_loaded():
-            self.load_model()
-
-    def _is_model_file_already_loaded(self):
-        if self.digest is None:
-            return False
-        digest = self._encoder_file_digest()
-        return digest and self.digest == digest
-
-    def _encoder_file_digest(self):
-        return get_file_digest(self.encoder_file_path)
+    def new_model_is_found(self):
+        d1 = get_file_digest(self.encoder_file_path)
+        d2 = get_file_digest(self.new_encoder_file_path)
+        return d1 and d2 and d1 != d2
 
     def save_model(self):
         logger.info(f"saving state model")
@@ -81,5 +78,13 @@ class StateModel:
     @property
     def decoder_file_path(self):
         return self.config.resource.model_dir / "state_decoder_weights.hf5"
+
+    @property
+    def new_encoder_file_path(self):
+        return self.config.resource.new_model_dir / "state_encoder_weights.hf5"
+
+    @property
+    def new_decoder_file_path(self):
+        return self.config.resource.new_model_dir / "state_decoder_weights.hf5"
 
 

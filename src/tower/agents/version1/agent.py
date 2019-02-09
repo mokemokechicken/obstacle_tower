@@ -1,3 +1,4 @@
+import shutil
 from logging import getLogger
 
 import numpy as np
@@ -6,6 +7,7 @@ from tower.agents.base import AgentBase
 from tower.agents.version1.limited_action import LimitedAction
 from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
+from tower.agents.version1.train_policy_in_another_state import PolicyReTrainer
 from tower.lib.memory import FileMemory
 from tower.lib.state_monitor import StateMonitor
 from tower.observation.event_handlers.infomation import InformationHandler
@@ -49,7 +51,7 @@ class EvolutionAgent(AgentBase):
 
         for epoch_idx in range(ec.n_epoch):
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
-            self.state_model.load_model_if_updated()
+            self.check_update_of_state_model()
             self.start_floor = (epoch_idx % 20) + 1
             test_results = []
             original_parameters = self.policy_model.get_parameters()
@@ -66,6 +68,23 @@ class EvolutionAgent(AgentBase):
             self.policy_model.save_model()
             best_rewards.append(float(np.max([x[0] for x in test_results])))
             logger.info(f"best reward history={best_rewards}")
+
+    def check_update_of_state_model(self):
+        if not self.state_model.new_model_is_found():
+            return
+        new_state_model = StateModel(self.config)
+        if not new_state_model.load_model(new_model=True):
+            logger.warning(f"---------- loading new model fail!! -------------")
+            return
+        trainer = PolicyReTrainer(self.config, self.policy_model, self.state_model, new_state_model)
+        trainer.train(FileMemory(self.config))
+
+        self.state_model = new_state_model
+        files = list(self.config.resource.new_model_dir.glob("state_*"))
+        files += list(self.config.resource.new_model_dir.glob("checkpoint"))
+        for f in files:
+            logger.info(f"copying state model file: {f.name}")
+            shutil.copy(f, self.config.resource.model_dir)
 
     def make_new_parameters(self, original_parameters, sigma):
         new_parameters = []
