@@ -73,18 +73,18 @@ class StateModel:
 
     @property
     def encoder_file_path(self):
-        return self.config.resource.model_dir / "state_encoder_weights.hf5"
+        return self.config.resource.model_dir / "state_encoder_weights.h5"
 
     @property
     def decoder_file_path(self):
-        return self.config.resource.model_dir / "state_decoder_weights.hf5"
+        return self.config.resource.model_dir / "state_decoder_weights.h5"
 
     @property
     def new_encoder_file_path(self):
-        return self.config.resource.new_model_dir / "state_encoder_weights.hf5"
+        return self.config.resource.new_model_dir / "state_encoder_weights.h5"
 
     @property
     def new_decoder_file_path(self):
-        return self.config.resource.new_model_dir / "state_decoder_weights.hf5"
+        return self.config.resource.new_model_dir / "state_decoder_weights.h5"
 
 
