@@ -16,7 +16,3 @@ obstacle-tower-env/
 obstacletower.app/
 data/
 ml-agents/
-move_memory_to_ml.sh
-pull_from_ml.sh
-sync_to_ml.sh
-
