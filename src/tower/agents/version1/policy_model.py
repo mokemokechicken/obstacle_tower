@@ -34,13 +34,20 @@ class PolicyModel:
         in_state = Input((self.config.model.vae.latent_dim, ), name="in_state")
         in_keys = Input((1, ), name="in_keys")
         in_time = Input((1, ), name="in_time")
-        in_all = Concatenate(name="in_all")([in_state, in_keys, in_time])
-        out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")(in_all)
+        in_actions = Input((self.config.policy_model.n_actions, ), name="in_actions")
+        in_all = Concatenate(name="in_all")([in_state, in_keys, in_time, in_actions])
+        x = Dense(self.config.policy_model.hidden_size, activation="tanh", name="hidden")(in_all)
+        out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")(x)
         out_keep_rate = Dense(1, activation="sigmoid", name="keep_rate")(in_all)
-        self.model = Model([in_state, in_keys, in_time], [out_actions, out_keep_rate], name="policy_model")
+        self.model = Model([in_state, in_keys, in_time, in_actions], [out_actions, out_keep_rate], name="policy_model")
 
-    def predict(self, state, keys, time_remain):
-        actions, kr = self.model.predict([np.expand_dims(state, axis=0), np.array([[keys]]), np.array([[time_remain]])])
+    def predict(self, state, keys, time_remain, in_actions):
+        actions, kr = self.model.predict([
+            np.expand_dims(state, axis=0),
+            np.array([[keys]]),
+            np.array([[time_remain]]),
+            np.expand_dims(in_actions, axis=0),
+        ])
         return actions[0], kr[0]
 
     def get_parameters(self):

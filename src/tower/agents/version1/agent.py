@@ -6,6 +6,7 @@ from tower.agents.version1.state_model import StateModel
 from tower.const import Action
 from tower.lib.memory import FileMemory
 from tower.lib.state_monitor import StateMonitor
+from tower.lib.util import to_onehot
 from tower.observation.event_handlers.infomation import InformationHandler
 from tower.observation.event_handlers.training_data_recorder import TrainingDataRecorder
 from tower.observation.manager import ObservationManager
@@ -19,6 +20,7 @@ class EvolutionAgent(AgentBase):
     policy_model: PolicyModel
     observation: ObservationManager
     start_floor: int
+    action_history: list
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
@@ -107,6 +109,7 @@ class EvolutionAgent(AgentBase):
         map_reward = 0
         keep_rate = 0
         last_action = None
+        self.action_history = []
 
         while not done:
             self.observation.begin_loop()
@@ -137,11 +140,21 @@ class EvolutionAgent(AgentBase):
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
-        actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2])
+
+        in_actions = np.zeros((self.config.policy_model.n_actions, ))
+        for past_action in self.action_history:
+            in_actions[past_action] += 1
+        in_actions /= self.config.evolution.action_history_size
+
+        actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2], in_actions)
         if self.config.evolution.use_best_action:
             action = np.argmax(actions)
         else:
             action = np.random.choice(range(len(actions)), p=actions)
+
+        self.action_history.append(action)
+        self.action_history = self.action_history[-self.config.evolution.action_history_size:]
+
         return LimitedAction.from_int(action), keep_rate * 0.9
 
 

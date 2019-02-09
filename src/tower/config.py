@@ -121,8 +121,10 @@ class EvolutionConfig(ConfigBase):
         self.learning_rate = 0.1
         self.noise_sigma = 0.5
         self.use_best_action = False
+        self.action_history_size = 10
 
 
 class PolicyModelConfig(ConfigBase):
     def __init__(self):
         self.n_actions = 9
+        self.hidden_size = 5
