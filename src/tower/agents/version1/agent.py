@@ -29,7 +29,8 @@ class EvolutionAgent(AgentBase):
         self.observation.setup()
         self.state_model = StateModel(self.config)
         if not self.state_model.load_model():
-            raise RuntimeError("No State Model Found")
+            logger.info(f"No State Model Found")
+            self.state_model.build()
         self.policy_model = PolicyModel(self.config)
         if not self.policy_model.load_model():
             self.policy_model.build()
