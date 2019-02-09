@@ -44,9 +44,12 @@ class FileMemory(Memory):
         ret = []
         for episode_name in episode_list:
             path = self.base_dir / episode_name
-            with gzip.open(path, mode="rb") as f:
-                episode_data = pickle.load(f)
-                ret.append(episode_data)  # format -> see TrainingDataRecorder#end_episode()
+            try:
+                with gzip.open(path, mode="rb") as f:
+                    episode_data = pickle.load(f)
+                    ret.append(episode_data)  # format -> see TrainingDataRecorder#end_episode()
+            except Exception as e:
+                logger.warning(f"skip loading episode {episode_name}: {e}")
         return ret
 
     def forget_past(self):

@@ -49,10 +49,10 @@ class EvolutionAgent(AgentBase):
 
     def play(self):
         ec = self.config.evolution
+        self.check_and_update_of_state_model()
         best_rewards = []
 
         for epoch_idx in range(ec.n_epoch):
-            self.check_and_update_of_state_model()
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
             self.start_floor = (epoch_idx % 20) + 1
             test_results = []

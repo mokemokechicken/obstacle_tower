@@ -118,7 +118,7 @@ class VAEModelConfig(ConfigBase):
 
 class EvolutionConfig(ConfigBase):
     def __init__(self):
-        self.n_epoch = 200
+        self.n_epoch = 20
         self.n_play_per_test = 3
         self.n_test_per_epoch = 7
         self.learning_rate = 0.1
@@ -136,5 +136,5 @@ class PolicyModelConfig(ConfigBase):
 class PolicyModelTrainingConfig(ConfigBase):
     def __init__(self):
         self.pickup_episodes = 300
-        self.epochs = 50
+        self.epochs = 20
         self.batch_size = 16
