@@ -81,7 +81,6 @@ class EvolutionAgent(AgentBase):
 
         self.state_model = new_state_model
         files = list(self.config.resource.new_model_dir.glob("state_*"))
-        files += list(self.config.resource.new_model_dir.glob("checkpoint"))
         for f in files:
             logger.info(f"copying state model file: {f.name}")
             shutil.copy(f, self.config.resource.model_dir)

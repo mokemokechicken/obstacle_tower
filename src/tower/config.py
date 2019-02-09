@@ -84,9 +84,9 @@ class VAETrainConfig(ConfigBase):
         self.next_state_loss_weight = 1.
         self.lr = 0.00001
         self.lr_decay_factor = 0.1
-        self.lr_patience = 5
+        self.lr_patience = 20
         self.lr_min = self.lr * 0.01
-        self.epochs = 50
+        self.epochs = 100
         self.steps_per_epoch = 1000
         self.batch_size = 32
         self.early_stopping_patience = 30

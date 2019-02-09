@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from tensorflow.python.keras.layers import Dense, Lambda, Reshape, Conv2D, Conv2DTranspose, Flatten, Concatenate, Input
+from tensorflow.python.keras.losses import mean_squared_error
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.optimizers import Adam, SGD
 
@@ -61,19 +62,22 @@ class VAEModel:
 
         # next_latent_z
         self.action_in = Input((vc.action_size,))
-        encoder_and_action = Concatenate()([encoder_last_layer, self.action_in])
-        self.next_z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_mean")(encoder_and_action)
+        state_and_action = Concatenate()([self.z_mean, self.z_log_var, self.action_in])
+        self.next_z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_mean")(state_and_action)
         self.next_z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/next_latent_log_var")(
-            encoder_and_action)
+            state_and_action)
+
+        # reward
+        reward = Dense(1, activation="tanh")(state_and_action)
 
         self.encoder = Model(self.frame_in, [self.z_mean, self.z_log_var], name="VAE/encoder")
         self.decoder = Model(z_placeholder, x_decoded_mean, name="VAE/decoder")
-        self.training_model = Model([self.frame_in, self.action_in], self.decoder(z), name="VAE/training")
+        self.training_model = Model([self.frame_in, self.action_in], [self.decoder(z), reward], name="VAE/training")
 
     def compile(self):
         optimizer = Adam(lr=self.config.train.vae.lr)
         # optimizer = SGD(lr=self.config.train.vae.lr, momentum=0.9)
-        self.training_model.compile(optimizer=optimizer, loss=self.vae_loss)
+        self.training_model.compile(optimizer=optimizer, loss=[self.vae_loss, mean_squared_error])
 
     @staticmethod
     def sampling(args):

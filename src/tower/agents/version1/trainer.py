@@ -13,7 +13,7 @@ from tower.lib.util import to_onehot
 from ..base import TrainerBase
 
 
-TrainingData = namedtuple('TrainingData', 'frame next_frame action importance')
+TrainingData = namedtuple('TrainingData', 'frame next_frame action importance reward')
 
 logger = getLogger(__name__)
 
@@ -67,9 +67,10 @@ class Trainer(TrainerBase):
                     frame = training_data.frame[idx_list]
                     next_frame = training_data.next_frame[idx_list]
                     action = training_data.action[idx_list]
+                    reward = training_data.reward[idx_list]
 
                     targets = np.concatenate([frame, next_frame], axis=-1)
-                    yield ([frame, action], targets)
+                    yield ([frame, action], [targets, reward])
 
                 if batch_num > 1:
                     del training_data
@@ -107,16 +108,19 @@ class Trainer(TrainerBase):
                 death_reward = np.sum(self.apply_discount(death_rewards[t:t + tc.importance_step], discounts))
                 training_data['importance'].append(reward + tc.map_reward_weight * map_reward +
                                                    tc.death_reward_weight * death_reward)
+                training_data['reward'].append(reward + tc.map_reward_weight * map_reward -
+                                               tc.death_reward_weight * death_reward)
 
         frame = np.array(training_data['frame'])
         next_frame = np.array(training_data['next_frame'])
         action = np.array(training_data['action'])
         importance = np.array(training_data['importance'])
+        reward = np.array(training_data['reward'])
 
         importance = (importance - np.mean(importance)) / np.std(importance) * tc.importance_scale
         importance = np.exp(importance) / np.sum(np.exp(importance))
         # logger.info(f"loaded {len(frame)} frames")
-        return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance)
+        return TrainingData(frame=frame, next_frame=next_frame, action=action, importance=importance, reward=reward)
 
     @staticmethod
     def apply_discount(values, discounts):
