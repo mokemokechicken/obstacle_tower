@@ -57,7 +57,7 @@ class EvolutionAgent(AgentBase):
         for epoch_idx in range(ec.n_epoch):
             self.memory.forget_past()
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
-            self.start_floor = (epoch_idx % 20) + 1
+            self.start_floor = (epoch_idx % 25) + 1
             test_results = []
             original_parameters = self.policy_model.get_parameters()
             for test_idx in range(ec.n_test_per_epoch):

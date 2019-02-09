@@ -40,7 +40,10 @@ class PolicyReTrainer:
         output_list = []
         for ei, ep in enumerate(all_episodes):
             logger.info(f"loading {ei+1}/{len(all_episodes)} episode")
-            input_data, output_data = self.create_dataset(memory.load_episodes([ep])[0])
+            episode_data = memory.load_episodes([ep])
+            if not episode_data:
+                continue
+            input_data, output_data = self.create_dataset(episode_data[0])
             input_list += input_data
             output_list += output_data
         data_x = [np.array([x[i] for x in input_list]) for i in range(4)]
