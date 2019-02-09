@@ -21,13 +21,13 @@ class PolicyReTrainer:
         self.current_policy_model = None
 
     def train(self, memory: FileMemory):
-        tc = self.config.policy_model_config
+        tc = self.config.policy_model_training
         self.current_policy_model = PolicyModel(self.config)
         self.current_policy_model.load_model()
 
-        dx, dy = self.pickup_episodes(memory, 100)
+        dx, dy = self.pickup_episodes(memory, tc.pickup_episodes)
         self.policy_model.compile()
-        self.policy_model.model.fit(dx, dy, batch_size=16, epochs=30)
+        self.policy_model.model.fit(dx, dy, batch_size=tc.batch_size, epochs=tc.epochs)
 
     def pickup_episodes(self, memory: FileMemory, size=None):
         all_episodes = list(memory.episodes())

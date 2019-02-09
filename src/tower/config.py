@@ -34,7 +34,7 @@ class Config(ConfigBase):
         self.model = ModelConfig()
         self.evolution = EvolutionConfig()
         self.policy_model = PolicyModelConfig()
-        self.policy_model_config = PolicyModelTrainingConfig()
+        self.policy_model_training = PolicyModelTrainingConfig()
 
 
 class ResourceConfig(ConfigBase):
@@ -135,5 +135,6 @@ class PolicyModelConfig(ConfigBase):
 
 class PolicyModelTrainingConfig(ConfigBase):
     def __init__(self):
-        self.epochs = 10
-        self.steps_per_epoch = 500
+        self.pickup_episodes = 300
+        self.epochs = 50
+        self.batch_size = 16
