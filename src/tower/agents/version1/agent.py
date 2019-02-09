@@ -23,10 +23,12 @@ class EvolutionAgent(AgentBase):
     observation: ObservationManager
     start_floor: int
     action_history: list
+    memory: FileMemory
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
         self.observation.setup()
+        self.memory = FileMemory(self.config)
         self.state_model = StateModel(self.config)
         if not self.state_model.load_model():
             logger.info(f"No State Model Found")
@@ -44,7 +46,7 @@ class EvolutionAgent(AgentBase):
                 self.observation.add_event_handler("state_monitor", state_monitor)
 
         if not self.config.play.no_save:
-            recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
+            recorder = TrainingDataRecorder(self.config, self.memory, self.observation)
             self.observation.add_event_handler("recorder", recorder)
 
     def play(self):
@@ -53,6 +55,7 @@ class EvolutionAgent(AgentBase):
         best_rewards = []
 
         for epoch_idx in range(ec.n_epoch):
+            self.memory.forget_past()
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
             self.start_floor = (epoch_idx % 20) + 1
             test_results = []
