@@ -68,7 +68,7 @@ class VAEModel:
             state_and_action)
 
         # reward
-        reward = Dense(1, activation="tanh")(state_and_action)
+        reward = Dense(1, activation="tanh", name="reward")(state_and_action)
 
         self.encoder = Model(self.frame_in, [self.z_mean, self.z_log_var], name="VAE/encoder")
         self.decoder = Model(z_placeholder, x_decoded_mean, name="VAE/decoder")

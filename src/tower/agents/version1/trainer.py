@@ -91,7 +91,6 @@ class Trainer(TrainerBase):
             death_rewards = np.zeros_like(map_rewards)
             last_time = steps[-1]["state"][2]
             if last_time > 0:
-                logger.info(f"add death penalty")
                 death_rewards[-1] = 1.
 
             for t, (step, next_step) in enumerate(zip(steps[:-1], steps[1:])):

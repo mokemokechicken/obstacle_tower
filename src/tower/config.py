@@ -82,10 +82,10 @@ class VAETrainConfig(ConfigBase):
     def __init__(self):
         self.kl_loss_rate = 0.1
         self.next_state_loss_weight = 1.
-        self.lr = 0.00001
+        self.lr = 0.0001
         self.lr_decay_factor = 0.1
         self.lr_patience = 20
-        self.lr_min = self.lr * 0.01
+        self.lr_min = self.lr * 0.001
         self.epochs = 100
         self.steps_per_epoch = 1000
         self.batch_size = 32
