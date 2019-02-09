@@ -28,6 +28,7 @@ class Trainer(TrainerBase):
             state_model.build()
         else:
             state_model.load_model()
+            self.config.train.vae.lr *= 0.01
 
         state_model.compile()
 
