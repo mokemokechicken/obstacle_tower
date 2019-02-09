@@ -9,7 +9,7 @@ from tower.agents.version1.state_model import StateModel
 from tower.const import Action
 from tower.lib.image_util import bgr_to_hsv
 from tower.lib.memory import FileMemory
-from tower.spike.util import to_onehot
+from tower.lib.util import to_onehot
 from ..base import TrainerBase
 
 
