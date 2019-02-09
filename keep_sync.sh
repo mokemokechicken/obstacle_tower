@@ -5,7 +5,7 @@ cd $(dirname $0)
 
 while true
 do
-  sh ./move_memory_to_ml.sh
+  # sh ./move_memory_to_ml.sh
   sh ./pull_from_ml.sh
   sleep 60
 done

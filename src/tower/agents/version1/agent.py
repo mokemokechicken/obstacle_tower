@@ -31,6 +31,7 @@ class EvolutionAgent(AgentBase):
         if not self.state_model.load_model():
             logger.info(f"No State Model Found")
             self.state_model.build()
+            self.state_model.save_model()
         self.policy_model = PolicyModel(self.config)
         if not self.policy_model.load_model():
             self.policy_model.build()
@@ -51,8 +52,8 @@ class EvolutionAgent(AgentBase):
         best_rewards = []
 
         for epoch_idx in range(ec.n_epoch):
+            self.check_and_update_of_state_model()
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
-            self.check_update_of_state_model()
             self.start_floor = (epoch_idx % 20) + 1
             test_results = []
             original_parameters = self.policy_model.get_parameters()
@@ -70,7 +71,7 @@ class EvolutionAgent(AgentBase):
             best_rewards.append(float(np.max([x[0] for x in test_results])))
             logger.info(f"best reward history={best_rewards}")
 
-    def check_update_of_state_model(self):
+    def check_and_update_of_state_model(self):
         if not self.state_model.new_model_is_found():
             return
         new_state_model = StateModel(self.config)

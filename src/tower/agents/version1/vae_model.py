@@ -37,7 +37,7 @@ class VAEModel:
             hidden = Conv2D(name=f"VAE/encoder_conv2D_{i + 1}", **conv)(hidden)
         encoder_last_shape = tuple(x for x in K.int_shape(hidden) if x is not None)
         logger.info(f"encoder_last_shape={encoder_last_shape}")
-        encoder_last_layer = hidden = Flatten()(hidden)
+        hidden = Flatten()(hidden)
         self.z_mean = Dense(vc.latent_dim, activation='linear', name="VAE/latent_mean")(hidden)
         self.z_log_var = Dense(vc.latent_dim, activation='linear', name="VAE/latent_log_var")(hidden)
         z = Lambda(self.sampling, output_shape=(vc.latent_dim,), name="VAE/sampling")([self.z_mean, self.z_log_var])

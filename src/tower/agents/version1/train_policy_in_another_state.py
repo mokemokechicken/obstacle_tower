@@ -1,3 +1,5 @@
+from logging import getLogger
+
 import numpy as np
 
 from tower.agents.version1.limited_action import LimitedAction
@@ -7,26 +9,43 @@ from tower.config import Config
 from tower.lib.memory import FileMemory
 
 
+logger = getLogger(__name__)
+
+
 class PolicyReTrainer:
     def __init__(self, config: Config, policy_model: PolicyModel, from_state: StateModel, to_state: StateModel):
         self.config = config
         self.policy_model = policy_model
         self.from_state = from_state
         self.to_state = to_state
+        self.current_policy_model = None
 
     def train(self, memory: FileMemory):
         tc = self.config.policy_model_config
-        self.policy_model.compile()
-        data_generator = self.generator(memory)
-        self.policy_model.model.fit_generator(data_generator, steps_per_epoch=tc.steps_per_epoch, epochs=tc.epochs)
+        self.current_policy_model = PolicyModel(self.config)
+        self.current_policy_model.load_model()
 
-    def generator(self, memory: FileMemory):
-        all_episodes = memory.episodes()
-        for ep in all_episodes:
+        dx, dy = self.pickup_episodes(memory, 100)
+        self.policy_model.compile()
+        self.policy_model.model.fit(dx, dy, batch_size=16, epochs=30)
+
+    def pickup_episodes(self, memory: FileMemory, size=None):
+        all_episodes = list(memory.episodes())
+        logger.info(f"{len(all_episodes)} episodes found")
+        if size:
+            all_episodes = np.random.choice(all_episodes, size=size)
+            logger.info(f"{size} episodes are picked up")
+
+        input_list = []
+        output_list = []
+        for ei, ep in enumerate(all_episodes):
+            logger.info(f"loading {ei+1}/{len(all_episodes)} episode")
             input_data, output_data = self.create_dataset(memory.load_episodes([ep])[0])
-            data_x = [[np.array(x[0]), np.array(x[1]), np.array(x[2]), np.array(x[3])] for x in input_data]
-            data_y = [[np.array(x[0]), np.array(x[1])] for x in output_data]
-            yield (data_x, data_y)
+            input_list += input_data
+            output_list += output_data
+        data_x = [np.array([x[i] for x in input_list]) for i in range(4)]
+        data_y = [np.array([x[i] for x in output_list]) for i in range(2)]
+        return data_x, data_y
 
     def create_dataset(self, episode_data):
         steps = episode_data["steps"]
@@ -52,9 +71,9 @@ class PolicyReTrainer:
 
             state, _ = self.from_state.encode_to_state(obs[0])
             new_state, _ = self.to_state.encode_to_state(obs[0])
-            actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2], in_actions)
+            actions, keep_rate = self.current_policy_model.predict(state, obs[1], obs[2], in_actions)
 
             input_data.append((new_state, [obs[1]], [obs[2]], in_actions))
-            output_data.append((actions, [keep_rate]))
+            output_data.append((actions, keep_rate))
 
         return input_data, output_data
