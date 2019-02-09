@@ -3,9 +3,9 @@ from logging import getLogger
 import numpy as np
 
 from tower.agents.base import AgentBase
+from tower.agents.version1.limited_action import LimitedAction
 from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
-from tower.const import Action
 from tower.lib.memory import FileMemory
 from tower.lib.state_monitor import StateMonitor
 from tower.observation.event_handlers.infomation import InformationHandler
@@ -158,23 +158,4 @@ class EvolutionAgent(AgentBase):
 
         return LimitedAction.from_int(action), keep_rate * 0.9
 
-
-class LimitedAction:
-    size = 9
-    actions = [
-        Action.NOP,
-        Action.FORWARD,
-        Action.BACK,
-        Action.LEFT,
-        Action.RIGHT,
-        Action.CAMERA_RIGHT,
-        Action.CAMERA_LEFT,
-        Action.JUMP,
-        Action.FORWARD + Action.JUMP,
-    ]
-
-    @classmethod
-    def from_int(cls, n):
-        assert 0 <= n < cls.size
-        return cls.actions[n]
 
