@@ -91,6 +91,8 @@ class MapController:
             del self.map
             self.map = new_map
             # offset_origin_x is not changed
+
+        sy, sx = self.map.shape
         if y0 < 0:
             exp_size = math.ceil(- y0 / self.size) * self.size
             new_map = np.zeros((sy + exp_size, sx), dtype=self.map.dtype)
