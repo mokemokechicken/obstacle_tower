@@ -3,7 +3,9 @@ from logging import getLogger
 import numpy as np
 from tensorflow.python.keras import Model, Input
 from tensorflow.python.keras.layers import Concatenate
+from tensorflow.python.keras.losses import kullback_leibler_divergence, mean_squared_error
 from tensorflow.python.keras.models import load_model
+from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.layers.core import Dense
 
 from tower.config import Config
@@ -57,7 +59,7 @@ class PolicyModel:
         self.model.set_weights(parameters)
 
     def compile(self):
-        self.model.compile()
+        self.model.compile(optimizer=Adam(lr=0.00001), loss=[kullback_leibler_divergence, mean_squared_error])
 
     @property
     def model_file_path(self):

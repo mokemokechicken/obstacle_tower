@@ -15,10 +15,10 @@ class PolicyReTrainer:
         self.to_state = to_state
 
     def train(self, memory: FileMemory):
+        tc = self.config.policy_model_config
         self.policy_model.compile()
         data_generator = self.generator(memory)
-
-        self.policy_model.model.fit_generator(data_generator, steps_per_epoch=500, epochs=10)
+        self.policy_model.model.fit_generator(data_generator, steps_per_epoch=tc.steps_per_epoch, epochs=tc.epochs)
 
     def generator(self, memory: FileMemory):
         all_episodes = memory.episodes()
