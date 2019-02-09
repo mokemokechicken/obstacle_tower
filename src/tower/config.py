@@ -135,6 +135,6 @@ class PolicyModelConfig(ConfigBase):
 
 class PolicyModelTrainingConfig(ConfigBase):
     def __init__(self):
-        self.pickup_episodes = 300
+        self.pickup_episodes = 100
         self.epochs = 40
         self.batch_size = 16

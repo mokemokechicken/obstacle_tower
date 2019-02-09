@@ -1,3 +1,4 @@
+from collections import Counter
 from logging import getLogger
 
 import numpy as np
@@ -33,8 +34,8 @@ class PolicyReTrainer:
         all_episodes = list(memory.episodes())
         logger.info(f"{len(all_episodes)} episodes found")
         if size:
-            all_episodes = np.random.choice(all_episodes, size=size)
-            logger.info(f"{size} episodes are picked up")
+            all_episodes = self.pickup_top_n_rewards_episodes(memory, all_episodes, size)
+            logger.info(f"best {size} episodes are picked up")
 
         input_list = []
         output_list = []
@@ -49,6 +50,18 @@ class PolicyReTrainer:
         data_x = [np.array([x[i] for x in input_list]) for i in range(4)]
         data_y = [np.array([x[i] for x in output_list]) for i in range(2)]
         return data_x, data_y
+
+    @staticmethod
+    def pickup_top_n_rewards_episodes(memory, all_episodes, size):
+        episodes = Counter()
+        for name in all_episodes:
+            ep_data = memory.load_episodes([name])
+            if not ep_data:
+                continue
+            reward = ep_data.get("meta", {}).get("reward")
+            if reward:
+                episodes[name] = reward
+        return [x[0] for x in episodes.most_common(size)]
 
     def create_dataset(self, episode_data):
         steps = episode_data["steps"]
