@@ -1,16 +1,16 @@
 from logging import getLogger
 
+import numpy as np
+
 from tower.agents.base import AgentBase
 from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.const import Action
 from tower.lib.memory import FileMemory
 from tower.lib.state_monitor import StateMonitor
-from tower.lib.util import to_onehot
 from tower.observation.event_handlers.infomation import InformationHandler
 from tower.observation.event_handlers.training_data_recorder import TrainingDataRecorder
 from tower.observation.manager import ObservationManager
-import numpy as np
 
 logger = getLogger(__name__)
 
@@ -39,8 +39,9 @@ class EvolutionAgent(AgentBase):
                 state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info)
                 self.observation.add_event_handler("state_monitor", state_monitor)
 
-        recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
-        self.observation.add_event_handler("recorder", recorder)
+        if not self.config.play.no_save:
+            recorder = TrainingDataRecorder(self.config, FileMemory(self.config), self.observation)
+            self.observation.add_event_handler("recorder", recorder)
 
     def play(self):
         ec = self.config.evolution

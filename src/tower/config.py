@@ -51,6 +51,7 @@ class PlayConfig(ConfigBase):
         self.wait_per_frame = 1
         self.n_episode = 1
         self.render_state = False
+        self.no_save = False
 
 
 class MapConfig(ConfigBase):

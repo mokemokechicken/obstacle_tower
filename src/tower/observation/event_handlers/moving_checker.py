@@ -6,7 +6,7 @@ from scipy import stats
 from tower.const import Action
 from tower.observation.event_handlers.base import EventHandler, EventParamsAfterStep
 from tower.observation.event_handlers.frame import FrameHistory
-from tower.spike.util import frame_abs_diff
+from tower.lib.util import frame_abs_diff
 
 logger = getLogger(__name__)
 

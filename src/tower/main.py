@@ -21,6 +21,7 @@ def create_parser():
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--new-model', action="store_true", help="create new state model")
     parser.add_argument('--random', action="store_true", help="play with RandomAgent")
+    parser.add_argument('--no-save', action="store_true", help="play without recording")
     return parser
 
 
@@ -32,15 +33,17 @@ def start():
     if args.ep:
         config.play.n_episode = args.ep
     if args.render:
-        config.play.render = args.render
+        config.play.render = True
     if args.render_state:
-        config.play.render_state = args.render_state
+        config.play.render_state = True
     if args.wait is not None:
         config.play.wait_per_frame = args.wait
     if args.debug:
         config.debug = True
     if args.new_model:
         config.train.new_model = True
+    if args.no_save:
+        config.play.no_save = True
 
     log_level = 'debug' if config.debug else 'info'
     setup_logger(config.resource.log_file_path, log_level)
