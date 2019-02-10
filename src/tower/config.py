@@ -70,7 +70,7 @@ class TrainConfig(ConfigBase):
         self.new_model = False
         self.vae = VAETrainConfig()
         self.importance_step = 20
-        self.importance_scale = 2
+        self.importance_scale = 1.5
         self.map_reward_weight = 0.000001
         self.death_reward_weight = 0.1
         self.max_episode_in_one_time = 100
@@ -126,6 +126,7 @@ class EvolutionConfig(ConfigBase):
         self.noise_sigma = 0.5
         self.use_best_action = False
         self.action_history_size = 10
+        self.no_update_state = False
 
 
 class PolicyModelConfig(ConfigBase):

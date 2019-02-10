@@ -22,6 +22,7 @@ def create_parser():
     parser.add_argument('--new-model', action="store_true", help="create new state model")
     parser.add_argument('--random', action="store_true", help="play with RandomAgent")
     parser.add_argument('--no-save', action="store_true", help="play without recording")
+    parser.add_argument('--no-update-state', action="store_true", help="not checking update of state model")
     return parser
 
 
@@ -44,6 +45,8 @@ def start():
         config.train.new_model = True
     if args.no_save:
         config.play.no_save = True
+    if args.no_update_state:
+        config.evolution.no_update_state = True
 
     log_level = 'debug' if config.debug else 'info'
     setup_logger(config.resource.log_file_path, log_level)

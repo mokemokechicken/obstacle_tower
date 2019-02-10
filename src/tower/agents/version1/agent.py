@@ -51,13 +51,16 @@ class EvolutionAgent(AgentBase):
 
     def play(self):
         ec = self.config.evolution
-        self.check_and_update_of_state_model()
+        if not ec.no_update_state:
+            self.check_and_update_of_state_model()
         best_rewards = []
+        floor_list = list(range(1, 26))
+        np.random.shuffle(floor_list)
 
         for epoch_idx in range(ec.n_epoch):
             self.memory.forget_past()
             logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
-            self.start_floor = (epoch_idx % 25) + 1
+            self.start_floor = floor_list[epoch_idx % len(floor_list)]
             test_results = []
             original_parameters = self.policy_model.get_parameters()
             for test_idx in range(ec.n_test_per_epoch):
