@@ -1,4 +1,5 @@
 import shutil
+from collections import Counter
 from logging import getLogger
 
 import numpy as np
@@ -24,6 +25,7 @@ class EvolutionAgent(AgentBase):
     start_floor: int
     action_history: list
     memory: FileMemory
+    state_counter: Counter
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
@@ -137,6 +139,7 @@ class EvolutionAgent(AgentBase):
         keep_rate = 0
         last_action = None
         self.action_history = []
+        self.state_counter = Counter()
 
         while not done:
             self.observation.begin_loop()
@@ -163,10 +166,17 @@ class EvolutionAgent(AgentBase):
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
 
+        logger.info(f"visited state num={len(self.state_counter)}, most_visit_count={self.state_counter.most_common(1)[0][1]}")
+
         return real_reward + map_reward
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
+
+        # -> state counter
+        discrete_state = tuple((state * 10).astype(np.int)) + (int(obs[1]*5), )
+        self.state_counter[discrete_state] += 1
+        # <- state counter
 
         in_actions = np.zeros((self.config.policy_model.n_actions, ))
         for past_action in self.action_history:

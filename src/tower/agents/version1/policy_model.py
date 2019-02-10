@@ -6,6 +6,7 @@ from tensorflow.python.keras.layers import Concatenate
 from tensorflow.python.keras.losses import kullback_leibler_divergence, mean_squared_error
 from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
+from tensorflow.python.keras.regularizers import l2
 from tensorflow.python.layers.core import Dense
 
 from tower.config import Config
@@ -38,8 +39,10 @@ class PolicyModel:
         in_time = Input((1,), name="in_time")
         in_actions = Input((self.config.policy_model.n_actions,), name="in_actions")
         in_all = Concatenate(name="in_all")([in_state, in_keys, in_time, in_actions])
-        x = Dense(self.config.policy_model.hidden_size, activation="tanh", name="hidden")(in_all)
-        out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")(x)
+        x = Dense(self.config.policy_model.hidden_size, activation="tanh", name="hidden",
+                  kernel_regularizer=l2(0.0001))(in_all)
+        out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters",
+                            kernel_regularizer=l2(0.0001))(x)
         out_keep_rate = Dense(1, activation="sigmoid", name="keep_rate")(in_all)
         self.model = Model([in_state, in_keys, in_time, in_actions], [out_actions, out_keep_rate], name="policy_model")
 

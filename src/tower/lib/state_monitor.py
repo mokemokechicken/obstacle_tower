@@ -69,7 +69,7 @@ class StateMonitor(EventHandler):
         self.cum_rarity = self.cum_rarity * 0.95 + rarity * 0.05
         # logger.info(f"rarity={rarity:.2f}")
         memory.store(state)
-        cv2.rectangle(image, (fw, 0), (fw + min(w, int(self.cum_rarity * 100)), 20), (0, 255, 0), thickness=-1)
+        cv2.rectangle(image, (fw, 0), (fw + min(w, int(self.cum_rarity * 1000)), 20), (0, 255, 0), thickness=-1)
         cv2.rectangle(image, (fw, image.shape[0] - min(30, int(rarity * 100))), (fw + w, image.shape[0]),
                       (0, 0, 255), thickness=-1)
         self.info.screen.show("state", image)
