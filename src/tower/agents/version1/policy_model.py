@@ -33,10 +33,10 @@ class PolicyModel:
 
     def build(self):
         logger.info(f"setup state model")
-        in_state = Input((self.config.model.vae.latent_dim, ), name="in_state")
-        in_keys = Input((1, ), name="in_keys")
-        in_time = Input((1, ), name="in_time")
-        in_actions = Input((self.config.policy_model.n_actions, ), name="in_actions")
+        in_state = Input((self.config.model.vae.latent_dim,), name="in_state")
+        in_keys = Input((1,), name="in_keys")
+        in_time = Input((1,), name="in_time")
+        in_actions = Input((self.config.policy_model.n_actions,), name="in_actions")
         in_all = Concatenate(name="in_all")([in_state, in_keys, in_time, in_actions])
         x = Dense(self.config.policy_model.hidden_size, activation="tanh", name="hidden")(in_all)
         out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters")(x)
@@ -59,10 +59,9 @@ class PolicyModel:
         self.model.set_weights(parameters)
 
     def compile(self):
-        self.model.compile(optimizer=Adam(lr=0.00001), loss=[kullback_leibler_divergence, mean_squared_error])
+        self.model.compile(optimizer=Adam(lr=0.00001), loss=[kullback_leibler_divergence, mean_squared_error],
+                           loss_weights=[1., 0.])
 
     @property
     def model_file_path(self):
         return self.config.resource.model_dir / "policy_weights.h5"
-
-

@@ -55,16 +55,16 @@ class PolicyReTrainer:
         data_y = [np.array([x[i] for x in output_list]) for i in range(2)]
         return data_x, data_y
 
-    @staticmethod
-    def pickup_top_n_rewards_episodes(memory, all_episodes, size):
+    def pickup_top_n_rewards_episodes(self, memory, all_episodes, size):
         episodes = Counter()
         for name in all_episodes:
             ep_data = memory.load_episodes([name])
             if not ep_data:
                 continue
-            reward = ep_data[0].get("meta", {}).get("reward")
-            if reward:
-                episodes[name] = reward
+            meta = ep_data[0].get("meta", {})
+            reward = meta.get("reward", 0)
+            map_reward = meta.get("map_reward", 0)
+            episodes[name] = reward + map_reward * self.config.train.map_reward_weight
         return [x[0] for x in episodes.most_common(size)]
 
     def create_dataset(self, episode_data):

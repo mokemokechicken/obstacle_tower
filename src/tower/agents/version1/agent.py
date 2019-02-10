@@ -182,6 +182,6 @@ class EvolutionAgent(AgentBase):
         self.action_history.append(action)
         self.action_history = self.action_history[-self.config.evolution.action_history_size:]
 
-        return LimitedAction.from_int(action), keep_rate * 0.9
+        return LimitedAction.from_int(action), keep_rate * 0
 
 
