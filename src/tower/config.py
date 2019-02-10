@@ -70,7 +70,7 @@ class TrainConfig(ConfigBase):
         self.new_model = False
         self.vae = VAETrainConfig()
         self.importance_step = 20
-        self.importance_scale = 1.5
+        self.importance_scale = 1.
         self.map_reward_weight = 0.000001
         self.death_reward_weight = 0.1
         self.max_episode_in_one_time = 100
