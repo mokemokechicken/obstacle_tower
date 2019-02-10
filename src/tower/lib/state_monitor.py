@@ -19,16 +19,16 @@ class StateMonitor(EventHandler):
         self.frame_history = frame_history
         self.info = info
         self.plots = None
-        self._memory: StateHistory = None
+        self._history: StateHistory = None
         self.cum_rarity = 0.
 
     def get_memory(self, state):
-        if self._memory is None:
-            self._memory = StateHistory(state_size=len(state))
-        return self._memory
+        if self._history is None:
+            self._history = StateHistory(state_size=len(state))
+        return self._history
 
     def begin_episode(self, ep: int):
-        self._memory = None
+        self._history = None
         self.cum_rarity = 0
 
     def before_step(self):
