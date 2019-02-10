@@ -2,6 +2,7 @@ from collections import Counter
 from logging import getLogger
 
 import numpy as np
+from tensorflow.python.keras.callbacks import Callback
 
 from tower.agents.version1.limited_action import LimitedAction
 from tower.agents.version1.policy_model import PolicyModel
@@ -27,8 +28,11 @@ class PolicyReTrainer:
         self.current_policy_model.load_model()
 
         dx, dy = self.pickup_episodes(memory, tc.pickup_episodes)
+        callbacks = [
+            JustLoggingCallback(),
+        ]
         self.policy_model.compile()
-        self.policy_model.model.fit(dx, dy, batch_size=tc.batch_size, epochs=tc.epochs)
+        self.policy_model.model.fit(dx, dy, batch_size=tc.batch_size, epochs=tc.epochs, callbacks=callbacks)
 
     def pickup_episodes(self, memory: FileMemory, size=None):
         all_episodes = list(memory.episodes())
@@ -58,7 +62,7 @@ class PolicyReTrainer:
             ep_data = memory.load_episodes([name])
             if not ep_data:
                 continue
-            reward = ep_data.get("meta", {}).get("reward")
+            reward = ep_data[0].get("meta", {}).get("reward")
             if reward:
                 episodes[name] = reward
         return [x[0] for x in episodes.most_common(size)]
@@ -93,3 +97,8 @@ class PolicyReTrainer:
             output_data.append((actions, keep_rate))
 
         return input_data, output_data
+
+
+class JustLoggingCallback(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        logger.info(f"epoch {epoch} logs {logs}")

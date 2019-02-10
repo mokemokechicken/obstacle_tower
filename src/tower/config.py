@@ -80,16 +80,17 @@ class TrainConfig(ConfigBase):
 
 class VAETrainConfig(ConfigBase):
     def __init__(self):
+        self.reconstruct_loss_weight = 0.01
         self.kl_loss_rate = 0.1
         self.next_state_loss_weight = 1.
         self.lr = 0.0001
         self.lr_decay_factor = 0.1
-        self.lr_patience = 20
+        self.lr_patience = 30
         self.lr_min = self.lr * 0.001
         self.epochs = 100
         self.steps_per_epoch = 1000
         self.batch_size = 32
-        self.early_stopping_patience = 30
+        self.early_stopping_patience = 50
 
 
 class ModelConfig(ConfigBase):
@@ -135,6 +136,6 @@ class PolicyModelConfig(ConfigBase):
 
 class PolicyModelTrainingConfig(ConfigBase):
     def __init__(self):
-        self.pickup_episodes = 100
-        self.epochs = 40
+        self.pickup_episodes = 250
+        self.epochs = 100
         self.batch_size = 16

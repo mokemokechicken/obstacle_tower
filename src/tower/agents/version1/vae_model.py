@@ -108,8 +108,9 @@ class VAEModel:
         else:
             reconstruct_loss = self.reconstruct_loss(current_frame, x_decoded_mean)
 
-        total_loss = reconstruct_loss + latent_loss * self.config.train.vae.kl_loss_rate
-        total_loss += next_state_loss * self.config.train.vae.next_state_loss_weight
+        cf = self.config.train.vae
+        total_loss = reconstruct_loss * cf.reconstruct_loss_weight + latent_loss * cf.kl_loss_rate
+        total_loss += next_state_loss * cf.next_state_loss_weight
         return K.mean(total_loss)
 
     @staticmethod
