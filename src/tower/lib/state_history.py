@@ -14,7 +14,7 @@ class StateHistory:
 
     def store(self, state):
         index = self.index % self.memory_size
-        self.memory[index, ] = state
+        self.memory[index,] = state
         self.index += 1
 
     def difference_array(self, state):
