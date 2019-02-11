@@ -10,6 +10,7 @@ from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.agents.version1.train_policy_in_another_state import PolicyReTrainer
 from tower.lib.memory import FileMemory
+from tower.lib.state_history import StateHistory
 from tower.lib.state_monitor import StateMonitor
 from tower.observation.event_handlers.infomation import InformationHandler
 from tower.observation.event_handlers.training_data_recorder import TrainingDataRecorder
@@ -26,12 +27,14 @@ class EvolutionAgent(AgentBase):
     action_history: list
     memory: FileMemory
     state_counter: Counter
+    state_history: StateHistory
 
     def setup(self):
         self.observation = ObservationManager(self.config, self.env)
         self.observation.setup()
         self.memory = FileMemory(self.config)
         self.state_model = StateModel(self.config)
+        self.state_history = StateHistory(state_size=self.config.model.vae.latent_dim + 1)
         if not self.state_model.load_model():
             logger.info(f"No State Model Found")
             self.state_model.build()
@@ -61,20 +64,21 @@ class EvolutionAgent(AgentBase):
 
         for epoch_idx in range(ec.n_epoch):
             self.memory.forget_past()
-            logger.info(f"Start Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            logger.info(f"Start Training Epoch: {epoch_idx + 1}/{ec.n_epoch}")
             self.start_floor = floor_list[epoch_idx % len(floor_list)]
             test_results = []
             original_parameters = self.policy_model.get_parameters()
             for test_idx in range(ec.n_test_per_epoch):
-                logger.info(f"Start Test: Epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch}")
+                logger.info(f"Start Test: Epoch={epoch_idx + 1} test={test_idx + 1}/{ec.n_test_per_epoch}")
                 new_parameters, noises = self.make_new_parameters(original_parameters, sigma=ec.noise_sigma)
                 self.policy_model.set_parameters(new_parameters)
                 reward = self.play_n_episode(ec.n_play_per_test)
-                logger.info(f"Finish Test: Epoch={epoch_idx+1} test={test_idx+1}/{ec.n_test_per_epoch} -> mean reward={reward}")
+                logger.info(
+                    f"Finish Test: Epoch={epoch_idx + 1} test={test_idx + 1}/{ec.n_test_per_epoch} -> mean reward={reward}")
                 test_results.append((reward, noises))
             new_parameters = self.update_parameters(original_parameters, test_results)
             self.policy_model.set_parameters(new_parameters)
-            logger.info(f"Finish Training Epoch: {epoch_idx+1}/{ec.n_epoch}")
+            logger.info(f"Finish Training Epoch: {epoch_idx + 1}/{ec.n_epoch}")
             self.policy_model.save_model()
             best_rewards.append(float(np.max([x[0] for x in test_results])))
             logger.info(f"best reward history={best_rewards}")
@@ -140,6 +144,7 @@ class EvolutionAgent(AgentBase):
         last_action = None
         self.action_history = []
         self.state_counter = Counter()
+        self.state_history.reset()
 
         while not done:
             self.observation.begin_loop()
@@ -166,7 +171,8 @@ class EvolutionAgent(AgentBase):
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
 
-        logger.info(f"visited state num={len(self.state_counter)}, most_visit_count={self.state_counter.most_common(1)[0][1]}")
+        logger.info(
+            f"visited state num={len(self.state_counter)}, most_visit_count={self.state_counter.most_common(1)[0][1]}")
 
         return real_reward + map_reward
 
@@ -174,16 +180,24 @@ class EvolutionAgent(AgentBase):
         state, sigma = self.state_model.encode_to_state(obs[0])
 
         # -> state counter
-        discrete_state = tuple((state * 10).astype(np.int)) + (int(obs[1]*5), )
+        discrete_state = tuple((state * 10).astype(np.int)) + (int(obs[1] * 5),)
         self.state_counter[discrete_state] += 1
         # <- state counter
 
-        in_actions = np.zeros((self.config.policy_model.n_actions, ))
+        # -> recent rarity
+        history_state = np.array(list(state) + obs[1])
+        self.state_history.store(history_state)
+        recent_rarity = self.state_history.recent_rarity * 10
+        # <- recent rarity
+
+        # -> in actions
+        in_actions = np.zeros((self.config.policy_model.n_actions,))
         for past_action in self.action_history:
             in_actions[past_action] += 1
         in_actions /= self.config.evolution.action_history_size
+        # <- in actions
 
-        actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2], in_actions)
+        actions, keep_rate = self.policy_model.predict(state, obs[1], obs[2], in_actions, recent_rarity)
         if self.config.evolution.use_best_action:
             action = np.argmax(actions)
         else:
@@ -193,5 +207,3 @@ class EvolutionAgent(AgentBase):
         self.action_history = self.action_history[-self.config.evolution.action_history_size:]
 
         return LimitedAction.from_int(action), keep_rate * 0
-
-

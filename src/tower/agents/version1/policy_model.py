@@ -38,20 +38,23 @@ class PolicyModel:
         in_keys = Input((1,), name="in_keys")
         in_time = Input((1,), name="in_time")
         in_actions = Input((self.config.policy_model.n_actions,), name="in_actions")
-        in_all = Concatenate(name="in_all")([in_state, in_keys, in_time, in_actions])
+        in_rarity = Input((1,), name="in_rarity")
+        in_all = Concatenate(name="in_all")([in_state, in_keys, in_time, in_actions, in_rarity])
         x = Dense(self.config.policy_model.hidden_size, activation="tanh", name="hidden",
                   kernel_regularizer=l2(0.0001))(in_all)
         out_actions = Dense(self.config.policy_model.n_actions, activation="softmax", name="parameters",
                             kernel_regularizer=l2(0.0001))(x)
         out_keep_rate = Dense(1, activation="sigmoid", name="keep_rate")(in_all)
-        self.model = Model([in_state, in_keys, in_time, in_actions], [out_actions, out_keep_rate], name="policy_model")
+        self.model = Model([in_state, in_keys, in_time, in_actions, in_rarity], [out_actions, out_keep_rate],
+                           name="policy_model")
 
-    def predict(self, state, keys, time_remain, in_actions):
+    def predict(self, state, keys, time_remain, in_actions, in_rarity):
         actions, kr = self.model.predict([
             np.expand_dims(state, axis=0),
             np.array([[keys]]),
             np.array([[time_remain]]),
             np.expand_dims(in_actions, axis=0),
+            np.array([[in_rarity]]),
         ])
         return actions[0], kr[0]
 

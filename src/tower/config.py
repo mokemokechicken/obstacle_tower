@@ -132,7 +132,7 @@ class EvolutionConfig(ConfigBase):
 class PolicyModelConfig(ConfigBase):
     def __init__(self):
         self.n_actions = 9
-        self.hidden_size = 5
+        self.hidden_size = 8
 
 
 class PolicyModelTrainingConfig(ConfigBase):
