@@ -1,5 +1,6 @@
+import math
 import shutil
-from collections import Counter
+from collections import Counter, namedtuple
 from logging import getLogger
 
 import numpy as np
@@ -18,6 +19,8 @@ from tower.observation.event_handlers.training_data_recorder import TrainingData
 from tower.observation.manager import ObservationManager
 
 logger = getLogger(__name__)
+
+DecideActionResult = namedtuple("DecideActionResult", "action keep_rate estimated_count rarity")
 
 
 class EvolutionAgent(AgentBase):
@@ -146,9 +149,7 @@ class EvolutionAgent(AgentBase):
         last_obs = None
         max_time_remain = 1
         real_reward = 0
-        map_reward = 0
-        keep_rate = 0
-        last_action = None
+        explorer_reward = 0
         self.action_history = []
         self.state_history.reset()
 
@@ -161,23 +162,20 @@ class EvolutionAgent(AgentBase):
             last_obs[1] = last_obs[1] / 5.
             last_obs[2] = 1.0 * last_obs[2] / max_time_remain
 
-            if last_action is None or keep_rate <= np.random.random() or not self.observation.moving_checker.did_move:
-                action, keep_rate = self.decide_action(last_obs)
-            else:
-                action = last_action
-            obs, reward, done, info = self.observation.step(action)
-            last_action = action
+            decision = self.decide_action(last_obs)
+
+            obs, reward, done, info = self.observation.step(decision.action)
             if reward != 0:
                 logger.info(f"Get Reward={reward} Keys={obs[1]}")
             real_reward += reward
-            map_reward += self.observation.map_observation.map_reward * self.config.train.map_reward_weight
+            explorer_reward += self.config.evolution.explore_reward_weight / math.sqrt(decision.estimated_count + 0.001)
 
             self.observation.end_loop()
             last_obs = list(obs)
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
-
-        return real_reward + map_reward
+        logger.info(f"real_reward={real_reward:.1f} explore_reward={explorer_reward:.4f}")
+        return real_reward + explorer_reward
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
@@ -204,4 +202,6 @@ class EvolutionAgent(AgentBase):
         self.action_history.append(action)
         self.action_history = self.action_history[-self.config.evolution.action_history_size:]
 
-        return LimitedAction.from_int(action), keep_rate * 0
+        return DecideActionResult(action=LimitedAction.from_int(action), keep_rate=keep_rate * 0,
+                                  estimated_count=est_count)
+

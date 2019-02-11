@@ -129,6 +129,7 @@ class EvolutionConfig(ConfigBase):
         self.action_history_size = 10
         self.no_update_state = False
         self.start_random_floor = False
+        self.explore_reward_weight = 0.1
 
 
 class PolicyModelConfig(ConfigBase):
