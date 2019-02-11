@@ -27,7 +27,6 @@ class EvolutionAgent(AgentBase):
     start_floor: int
     action_history: list
     memory: FileMemory
-    state_counter: Counter
     state_history: StateHistory
 
     def setup(self):
@@ -35,7 +34,8 @@ class EvolutionAgent(AgentBase):
         self.observation.setup()
         self.memory = FileMemory(self.config)
         self.state_model = StateModel(self.config)
-        self.state_history = StateHistory(state_size=self.config.model.vae.latent_dim + 1)
+        self.state_history = StateHistory(self.config, state_size=self.config.model.vae.latent_dim + 1)
+        self.state_history.load()
         if not self.state_model.load_model():
             logger.info(f"No State Model Found")
             self.state_model.build()
@@ -60,8 +60,12 @@ class EvolutionAgent(AgentBase):
         if not ec.no_update_state:
             self.check_and_update_of_state_model()
         best_rewards = []
-        floor_list = list(range(1, 26))
-        np.random.shuffle(floor_list)
+
+        if ec.start_random_floor:
+            floor_list = list(range(1, 26))
+            np.random.shuffle(floor_list)
+        else:
+            floor_list = [1]
 
         for epoch_idx in range(ec.n_epoch):
             self.memory.forget_past()
@@ -99,8 +103,10 @@ class EvolutionAgent(AgentBase):
         for f in files:
             logger.info(f"copying state model file: {f.name}")
             shutil.copy(f, self.config.resource.model_dir)
+        self.state_history.save()
 
-    def make_new_parameters(self, original_parameters, sigma):
+    @staticmethod
+    def make_new_parameters(original_parameters, sigma):
         new_parameters = []
         noises = []
         for w in original_parameters:
@@ -144,7 +150,6 @@ class EvolutionAgent(AgentBase):
         keep_rate = 0
         last_action = None
         self.action_history = []
-        self.state_counter = Counter()
         self.state_history.reset()
 
         while not done:
@@ -172,24 +177,15 @@ class EvolutionAgent(AgentBase):
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
 
-        logger.info(
-            f"visited state num={len(self.state_counter)}, most_visit_count={self.state_counter.most_common(1)[0][1]}")
-
         return real_reward + map_reward
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
 
-        # -> state counter
-        discrete_state = tuple((state * 10).astype(np.int)) + (int(obs[1] * 5),)
-        self.state_counter[discrete_state] += 1
-        self.pseudo_counting.add_count(discrete_state)
-
-        # <- state counter
-
         # -> recent rarity
         self.state_history.store(state, obs)
         recent_rarity = self.state_history.recent_rarity * self.config.policy_model.recent_rarity_weight
+        est_count = self.state_history.estimate_count(state, obs)
         # <- recent rarity
 
         # -> in actions

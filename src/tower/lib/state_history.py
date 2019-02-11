@@ -1,10 +1,18 @@
+import pickle
+from logging import getLogger
+
 import numpy as np
 
+from tower.config import Config
 from tower.lib.pseudo_counting import PseudoCounting
 
 
+logger = getLogger(__name__)
+
+
 class StateHistory:
-    def __init__(self, state_size, history_size=1000, alpha=0.05):
+    def __init__(self, config: Config, state_size, history_size=1000, alpha=0.05):
+        self.config = config
         self.memory_size = history_size
         self.state_size = state_size
         self.index = 0
@@ -18,6 +26,25 @@ class StateHistory:
     @property
     def memory(self):
         return self._memory
+
+    def load(self):
+        try:
+            with self.db_file_path.open("rb") as f:
+                self.pseudo_counting.counters = pickle.load(f)
+                logger.info("loaded pseudo_counting")
+        except Exception as e:
+            logger.info("initialize pseudo_counting")
+            self.pseudo_counting.reset()
+
+    def save(self):
+        logger.info("saving pseudo_counting")
+        self.db_file_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.db_file_path.open("wb") as f:
+            pickle.dump(self.pseudo_counting.counters, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    @property
+    def db_file_path(self):
+        return self.config.resource.state_db_dir / "state_db.pkl"
 
     def reset(self, also_pseudo_count=False):
         self._memory[:, :] = 0.
@@ -33,6 +60,7 @@ class StateHistory:
 
         state = self._make_state(latent_state, obs)
         self._add_discrete_counting(state)
+
         differences = self.difference_array(state)
         rarity = float(0. if differences is None else np.min(differences))
         self.memory[index, ] = state

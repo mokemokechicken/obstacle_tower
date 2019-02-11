@@ -45,6 +45,7 @@ class ResourceConfig(ConfigBase):
         self.memory_dir = _project_base_dir() / "data" / "memory"
         self.model_dir = _project_base_dir() / "data" / "model"
         self.new_model_dir = _project_base_dir() / "data" / "new_model"
+        self.state_db_dir = _project_base_dir() / "data" / "state_db"
 
 
 class PlayConfig(ConfigBase):
@@ -127,6 +128,7 @@ class EvolutionConfig(ConfigBase):
         self.use_best_action = False
         self.action_history_size = 10
         self.no_update_state = False
+        self.start_random_floor = False
 
 
 class PolicyModelConfig(ConfigBase):
