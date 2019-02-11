@@ -22,19 +22,19 @@ class PolicyReTrainer:
         self.to_state = to_state
         self.current_policy_model = None
 
-    def train(self, memory: FileMemory):
+    def train(self, memory: FileMemory, new_state_history: StateHistory):
         tc = self.config.policy_model_training
         self.current_policy_model = PolicyModel(self.config)
         self.current_policy_model.load_model()
 
-        dx, dy = self.pickup_episodes(memory, tc.pickup_episodes)
+        dx, dy = self.pickup_episodes(memory, new_state_history, tc.pickup_episodes)
         callbacks = [
             JustLoggingCallback(),
         ]
         self.policy_model.compile()
         self.policy_model.model.fit(dx, dy, batch_size=tc.batch_size, epochs=tc.epochs, callbacks=callbacks)
 
-    def pickup_episodes(self, memory: FileMemory, size=None):
+    def pickup_episodes(self, memory: FileMemory, new_state_history: StateHistory, size=None):
         all_episodes = list(memory.episodes())
         logger.info(f"{len(all_episodes)} episodes found")
         if size:
@@ -48,7 +48,7 @@ class PolicyReTrainer:
             episode_data = memory.load_episodes([ep])
             if not episode_data:
                 continue
-            input_data, output_data = self.create_dataset(episode_data[0])
+            input_data, output_data = self.create_dataset(episode_data[0], new_state_history)
             input_list += input_data
             output_list += output_data
         data_x = [np.array([x[i] for x in input_list]) for i in range(5)]
@@ -67,16 +67,15 @@ class PolicyReTrainer:
             episodes[name] = reward + map_reward * self.config.train.map_reward_weight
         return [x[0] for x in episodes.most_common(size)]
 
-    def create_dataset(self, episode_data):
+    def create_dataset(self, episode_data, new_state_history: StateHistory):
         steps = episode_data["steps"]
         max_time_remain = float(max([x["state"][2] for x in steps]))
         action_history = []
 
         input_data = []
         output_data = []
-        cur_state_history = StateHistory(self.config.model.vae.latent_dim + 1)
-        new_state_history = StateHistory(self.config.model.vae.latent_dim + 1)
-
+        cur_state_history = StateHistory(self.config, self.config.model.vae.latent_dim + 1)
+        new_state_history.reset(also_pseudo_count=False)
         for step in steps:
             obs = step["state"]
             recorded_action = LimitedAction.original_action_to_limited_action(step["action"])

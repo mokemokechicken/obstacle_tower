@@ -1,6 +1,6 @@
 import math
 import shutil
-from collections import Counter, namedtuple
+from collections import namedtuple
 from logging import getLogger
 
 import numpy as np
@@ -11,7 +11,6 @@ from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.agents.version1.train_policy_in_another_state import PolicyReTrainer
 from tower.lib.memory import FileMemory
-from tower.lib.pseudo_counting import PseudoCounting
 from tower.lib.state_history import StateHistory
 from tower.lib.state_monitor import StateMonitor
 from tower.observation.event_handlers.infomation import InformationHandler
@@ -20,7 +19,7 @@ from tower.observation.manager import ObservationManager
 
 logger = getLogger(__name__)
 
-DecideActionResult = namedtuple("DecideActionResult", "action keep_rate estimated_count rarity")
+DecideActionResult = namedtuple("DecideActionResult", "action keep_rate estimated_count")
 
 
 class EvolutionAgent(AgentBase):
@@ -95,13 +94,16 @@ class EvolutionAgent(AgentBase):
         if not self.state_model.new_model_is_found():
             return
         new_state_model = StateModel(self.config)
+        new_state_history = StateHistory(self.config, self.config.model.vae.latent_dim + 1)
+
         if not new_state_model.load_model(new_model=True):
             logger.warning(f"---------- loading new model fail!! -------------")
             return
         trainer = PolicyReTrainer(self.config, self.policy_model, self.state_model, new_state_model)
-        trainer.train(FileMemory(self.config))
+        trainer.train(FileMemory(self.config), new_state_history)
 
         self.state_model = new_state_model
+        self.state_history = new_state_history
         files = list(self.config.resource.new_model_dir.glob("state_*"))
         for f in files:
             logger.info(f"copying state model file: {f.name}")
@@ -175,7 +177,7 @@ class EvolutionAgent(AgentBase):
             if max_time_remain < last_obs[2]:
                 max_time_remain = last_obs[2]
         logger.info(f"real_reward={real_reward:.1f} explore_reward={explorer_reward:.4f}")
-        return real_reward + explorer_reward
+        return real_reward + np.clip(explorer_reward, 0., 10.)
 
     def decide_action(self, obs):
         state, sigma = self.state_model.encode_to_state(obs[0])
