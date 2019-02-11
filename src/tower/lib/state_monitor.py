@@ -14,21 +14,16 @@ logger = getLogger(__name__)
 
 
 class StateMonitor(EventHandler):
-    def __init__(self, state_model: StateModel, frame_history: FrameHistory, info: InformationHandler):
+    def __init__(self, state_model: StateModel, frame_history: FrameHistory, info: InformationHandler,
+                 state_history: StateHistory):
         self.state_model = state_model
         self.frame_history = frame_history
         self.info = info
+        self.state_history = state_history
         self.plots = None
-        self._history: StateHistory = None
-
-    def get_memory(self, state):
-        if self._history is None:
-            self._history = StateHistory(state_size=len(state))
-        return self._history
 
     def begin_episode(self, ep: int):
-        if self._history:
-            self._history.reset()
+        self.state_history.reset()
 
     def before_step(self):
         half_frame = self.frame_history.last_half_frame
@@ -61,10 +56,9 @@ class StateMonitor(EventHandler):
         image[0:fh, 0:fw, :] = frame
         image[0:h, fw + margin_w:fw + margin_w + w, :] = state_img / 255
 
-        # memory
-        memory = self.get_memory(state)
-        memory.store(state)
-        cv2.rectangle(image, (fw, 0), (fw + min(w, int(memory.recent_rarity * 1000)), 20), (0, 255, 0), thickness=-1)
-        cv2.rectangle(image, (fw, image.shape[0] - min(30, int(memory.last_rarity * 100))), (fw + w, image.shape[0]),
-                      (0, 0, 255), thickness=-1)
+        # state rarity
+        cv2.rectangle(image, (fw, 0), (fw + min(w, int(self.state_history.recent_rarity * 1000)), 20), (0, 255, 0),
+                      thickness=-1)
+        cv2.rectangle(image, (fw, image.shape[0] - min(30, int(self.state_history.last_rarity * 100))),
+                      (fw + w, image.shape[0]), (0, 0, 255), thickness=-1)
         self.info.screen.show("state", image)

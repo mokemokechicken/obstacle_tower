@@ -9,7 +9,7 @@ from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.config import Config
 from tower.lib.memory import FileMemory
-
+from tower.lib.state_history import StateHistory
 
 logger = getLogger(__name__)
 
@@ -51,7 +51,7 @@ class PolicyReTrainer:
             input_data, output_data = self.create_dataset(episode_data[0])
             input_list += input_data
             output_list += output_data
-        data_x = [np.array([x[i] for x in input_list]) for i in range(4)]
+        data_x = [np.array([x[i] for x in input_list]) for i in range(5)]
         data_y = [np.array([x[i] for x in output_list]) for i in range(2)]
         return data_x, data_y
 
@@ -74,6 +74,8 @@ class PolicyReTrainer:
 
         input_data = []
         output_data = []
+        cur_state_history = StateHistory(self.config.model.vae.latent_dim + 1)
+        new_state_history = StateHistory(self.config.model.vae.latent_dim + 1)
 
         for step in steps:
             obs = step["state"]
@@ -91,9 +93,14 @@ class PolicyReTrainer:
 
             state, _ = self.from_state.encode_to_state(obs[0])
             new_state, _ = self.to_state.encode_to_state(obs[0])
-            actions, keep_rate = self.current_policy_model.predict(state, obs[1], obs[2], in_actions)
 
-            input_data.append((new_state, [obs[1]], [obs[2]], in_actions))
+            cur_state_history.store(state, obs)
+            new_state_history.store(new_state, obs)
+
+            actions, keep_rate = self.current_policy_model.predict(state, obs[1], obs[2], in_actions,
+                                                                   cur_state_history.recent_rarity)
+
+            input_data.append((new_state, [obs[1]], [obs[2]], in_actions, [new_state_history.recent_rarity]))
             output_data.append((actions, keep_rate))
 
         return input_data, output_data

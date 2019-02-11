@@ -23,9 +23,10 @@ class StateHistory:
         self.last_rarity = 0
         self.last_state = None
 
-    def store(self, state):
+    def store(self, latent_state, obs):
         index = self.index % self.memory_size
 
+        state = np.array(list(latent_state) + obs[1])
         differences = self.difference_array(state)
         rarity = float(0. if differences is None else np.min(differences))
         self.memory[index, ] = state

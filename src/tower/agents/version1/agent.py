@@ -47,7 +47,7 @@ class EvolutionAgent(AgentBase):
             info = InformationHandler(self.config, self.observation)
             self.observation.add_event_handler("info", info)
             if self.config.play.render_state:
-                state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info)
+                state_monitor = StateMonitor(self.state_model, self.observation.frame_history, info, self.state_history)
                 self.observation.add_event_handler("state_monitor", state_monitor)
 
         if not self.config.play.no_save:
@@ -185,8 +185,7 @@ class EvolutionAgent(AgentBase):
         # <- state counter
 
         # -> recent rarity
-        history_state = np.array(list(state) + obs[1])
-        self.state_history.store(history_state)
+        self.state_history.store(state, obs)
         recent_rarity = self.state_history.recent_rarity * 10
         # <- recent rarity
 
