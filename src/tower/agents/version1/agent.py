@@ -87,6 +87,7 @@ class EvolutionAgent(AgentBase):
             self.policy_model.set_parameters(new_parameters)
             logger.info(f"Finish Training Epoch: {epoch_idx + 1}/{ec.n_epoch}")
             self.policy_model.save_model()
+            self.state_history.save()
             best_rewards.append(float(np.max([x[0] for x in test_results])))
             logger.info(f"best reward history={best_rewards}")
 
