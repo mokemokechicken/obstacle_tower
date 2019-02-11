@@ -10,6 +10,7 @@ from tower.agents.version1.policy_model import PolicyModel
 from tower.agents.version1.state_model import StateModel
 from tower.agents.version1.train_policy_in_another_state import PolicyReTrainer
 from tower.lib.memory import FileMemory
+from tower.lib.pseudo_counting import PseudoCounting
 from tower.lib.state_history import StateHistory
 from tower.lib.state_monitor import StateMonitor
 from tower.observation.event_handlers.infomation import InformationHandler
@@ -182,6 +183,8 @@ class EvolutionAgent(AgentBase):
         # -> state counter
         discrete_state = tuple((state * 10).astype(np.int)) + (int(obs[1] * 5),)
         self.state_counter[discrete_state] += 1
+        self.pseudo_counting.add_count(discrete_state)
+
         # <- state counter
 
         # -> recent rarity
