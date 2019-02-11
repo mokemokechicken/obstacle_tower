@@ -20,9 +20,10 @@ def create_parser():
     parser.add_argument('--wait', type=int, help="wait milli seconds per frame (0 is forever)")
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--new-model', action="store_true", help="create new state model")
-    parser.add_argument('--random', action="store_true", help="play with RandomAgent")
+    parser.add_argument('--random-agent', action="store_true", help="play with RandomAgent")
     parser.add_argument('--no-save', action="store_true", help="play without recording")
     parser.add_argument('--no-update-state', action="store_true", help="not checking update of state model")
+    parser.add_argument('--random-floor', action="store_true", help="start from random floor")
     return parser
 
 
@@ -47,12 +48,14 @@ def start():
         config.play.no_save = True
     if args.no_update_state:
         config.evolution.no_update_state = True
+    if args.random_floor:
+        config.evolution.start_random_floor = True
 
     log_level = 'debug' if config.debug else 'info'
     setup_logger(config.resource.log_file_path, log_level)
 
     if args.command == "play":
-        agent = RandomAgent if args.random else EvolutionAgent
+        agent = RandomAgent if args.random_agent else EvolutionAgent
         play.start(config, agent)
     elif args.command == "train":
         train.start(config)
