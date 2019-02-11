@@ -186,7 +186,7 @@ class EvolutionAgent(AgentBase):
 
         # -> recent rarity
         self.state_history.store(state, obs)
-        recent_rarity = self.state_history.recent_rarity * 10
+        recent_rarity = self.state_history.recent_rarity * self.config.policy_model.recent_rarity_weight
         # <- recent rarity
 
         # -> in actions

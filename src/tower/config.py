@@ -133,6 +133,7 @@ class PolicyModelConfig(ConfigBase):
     def __init__(self):
         self.n_actions = 9
         self.hidden_size = 8
+        self.recent_rarity_weight = 20.
 
 
 class PolicyModelTrainingConfig(ConfigBase):

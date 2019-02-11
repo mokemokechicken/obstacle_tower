@@ -96,11 +96,12 @@ class PolicyReTrainer:
 
             cur_state_history.store(state, obs)
             new_state_history.store(new_state, obs)
+            cur_rarity = cur_state_history.recent_rarity * self.config.policy_model.recent_rarity_weight
+            new_rarity = new_state_history.recent_rarity * self.config.policy_model.recent_rarity_weight
 
-            actions, keep_rate = self.current_policy_model.predict(state, obs[1], obs[2], in_actions,
-                                                                   cur_state_history.recent_rarity)
+            actions, keep_rate = self.current_policy_model.predict(state, obs[1], obs[2], in_actions, cur_rarity)
 
-            input_data.append((new_state, [obs[1]], [obs[2]], in_actions, [new_state_history.recent_rarity]))
+            input_data.append((new_state, [obs[1]], [obs[2]], in_actions, [new_rarity]))
             output_data.append((actions, keep_rate))
 
         return input_data, output_data
