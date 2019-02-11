@@ -76,7 +76,7 @@ class TrainConfig(ConfigBase):
         self.death_reward_weight = 0.1
         self.max_episode_in_one_time = 100
         self.discount_rate = 0.97
-        self.memory_size = 500
+        self.memory_size = 1000
 
 
 class VAETrainConfig(ConfigBase):
@@ -141,6 +141,6 @@ class PolicyModelConfig(ConfigBase):
 
 class PolicyModelTrainingConfig(ConfigBase):
     def __init__(self):
-        self.pickup_episodes = 250
-        self.epochs = 100
-        self.batch_size = 16
+        self.pickup_episodes = 1000
+        self.epochs = 25
+        self.batch_size = 32
